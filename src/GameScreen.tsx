@@ -1,18 +1,19 @@
 import React, {useContext} from 'react';
-import {Text, TouchableOpacity} from './components';
+import {Text, TouchableOpacity, View} from './components';
 import Matrix from './Matrix';
 import BlocksRow from './BlocksRow';
 import Block from './Block';
-import {MainContext} from './MainContext';
+import {MainContext} from './contexts/MainContext';
+import {useTheme} from './contexts/ThemeContext';
 
 export default function GameScreen() {
   const {rows, restart} = useContext(MainContext);
+  const {theme} = useTheme();
 
   return (
-    <>
+    <View center h="100%" bgColor={theme.backgroundColor}>
       <TouchableOpacity
-        mt={36}
-        mb={-36}
+        mt={8}
         py={2}
         px={8}
         onPress={restart}
@@ -43,6 +44,6 @@ export default function GameScreen() {
           </BlocksRow>
         ))}
       </Matrix>
-    </>
+    </View>
   );
 }

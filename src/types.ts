@@ -6,5 +6,5 @@ export type Block = {
   id: string;
   columns: BlockColumns;
   startIndex: number;
-  color: HexColor;
+  colorIndex: number;
 };

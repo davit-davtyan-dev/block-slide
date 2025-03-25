@@ -1,8 +1,9 @@
 import React, {useContext, useMemo, useRef, useState} from 'react';
 import {Animated, PanResponder, StyleSheet} from 'react-native';
 import {View} from './components';
-import {MainContext} from './MainContext';
+import {MainContext} from './contexts/MainContext';
 import useSizes from './hooks/useSizes';
+import {useTheme} from './contexts/ThemeContext';
 import {darkenColor} from './helpers';
 
 import type {Block} from './types';
@@ -19,11 +20,15 @@ function roundToNearestMultiple(num: number, multiple: number) {
 
 export default function Block(props: BlockProps) {
   const {blockPixelSize} = useSizes();
+  const {theme} = useTheme();
   const {matrixLayout, setShadowState} = useContext(MainContext);
 
   const width = props.block.columns * blockPixelSize;
-  const min = props.block.startIndex * blockPixelSize;
-  const max = matrixLayout?.width ? matrixLayout.width - width : 0;
+  const min = (props.leftLimit || 0) * blockPixelSize;
+  const max =
+    ((props.rightLimit
+      ? props.rightLimit * blockPixelSize
+      : matrixLayout?.width) || 0) - width;
 
   const pan = useRef(new Animated.ValueXY({x: min, y: 0})).current;
   const [latestPosition, setLatestPosition] = useState(0);
@@ -96,6 +101,8 @@ export default function Block(props: BlockProps) {
     ],
   );
 
+  const color = theme.blockColorOptions[props.block.colorIndex];
+
   return (
     <>
       <Animated.View
@@ -110,8 +117,8 @@ export default function Block(props: BlockProps) {
           width={width}
           height={blockPixelSize}
           borderWidth={6}
-          borderColor={darkenColor(props.block.color, 0.2)}
-          bgColor={props.block.color}
+          borderColor={darkenColor(color, 0.2)}
+          bgColor={color}
         />
       </Animated.View>
     </>

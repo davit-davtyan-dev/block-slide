@@ -1,6 +1,6 @@
 import React, {useContext} from 'react';
 import {View} from './components';
-import {MainContext} from './MainContext';
+import {MainContext} from './contexts/MainContext';
 import MatrixBackground from './MatrixBackground';
 import useSizes from './hooks/useSizes';
 

@@ -1,17 +1,7 @@
 import {createContext, useCallback, useState} from 'react';
-import {makeColorPastel} from './helpers';
+import {BLOCK_COLOR_COUNT} from './ThemeContext';
 import type {LayoutRectangle} from 'react-native';
-import type {Block, BlockColumns, HexColor} from './types';
-
-const baseColors: Array<HexColor> = [
-  '#FF0000',
-  '#00FF00',
-  '#0000FF',
-  '#FFFF00',
-  '#00FFFF',
-  '#FF00FF',
-];
-const colorOptions = baseColors.map(makeColorPastel);
+import type {Block, BlockColumns} from '../types';
 
 type MainContextState = {
   matrixLayout: LayoutRectangle | null;
@@ -66,7 +56,7 @@ function generateRow() {
   while (blocksCount > 0) {
     const colorIndex = getRandomNumberInRangeInclusive(
       0,
-      colorOptions.length - 1,
+      BLOCK_COLOR_COUNT - 1,
     );
     const rangeStartNumber =
       blocks.filter(item => item.columns === 1).length >= 3 ? 2 : 1;
@@ -77,9 +67,9 @@ function generateRow() {
 
     blocksCount -= blockColumn;
     blocks.push({
-      id: `${blockColumn}-${colorOptions[colorIndex]}`,
+      id: `${blockColumn}-${colorIndex}`,
       columns: blockColumn,
-      color: colorOptions[colorIndex],
+      colorIndex,
       startIndex: 0,
     });
   }
