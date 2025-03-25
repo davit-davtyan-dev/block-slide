@@ -1,9 +1,9 @@
-import {createContext, useCallback, useState} from 'react';
+import {createContext, useCallback, useContext, useState} from 'react';
 import {BLOCK_COLOR_COUNT} from './ThemeContext';
 import type {LayoutRectangle} from 'react-native';
 import type {Block, BlockColumns} from '../types';
 
-type MainContextState = {
+type GameContextState = {
   matrixLayout: LayoutRectangle | null;
   setMatrixLayout: (matrixLayout: LayoutRectangle) => void;
   rows: Array<Array<Block>>;
@@ -19,21 +19,9 @@ type MainContextState = {
   }) => void;
 };
 
-const initialState: MainContextState = {
-  matrixLayout: null,
-  setMatrixLayout: () => {},
-  rows: [],
-  setRows: () => {},
-  restart: () => {},
-  shadowColumns: 1,
-  shadowPosition: 0,
-  showShadow: false,
-  setShadowState: () => {},
-};
+const GameContext = createContext<GameContextState | undefined>(undefined);
 
-export const MainContext = createContext(initialState);
-
-type MainContextProviderProps = {children: React.ReactNode};
+type GameContextProviderProps = {children: React.ReactNode};
 
 function getRandomNumberInRangeInclusive(a: number, b: number) {
   const diff = Math.abs(a - b);
@@ -95,25 +83,21 @@ function generateRow() {
   return blocksWithIndexes;
 }
 
-export const MainContextProvider = (props: MainContextProviderProps) => {
+export const GameContextProvider = (props: GameContextProviderProps) => {
   const [matrixLayout, setMatrixLayout] =
-    useState<MainContextState['matrixLayout']>(null);
+    useState<GameContextState['matrixLayout']>(null);
   const [rows, setRows] = useState(() => {
     return [generateRow(), generateRow()];
   });
-  const [shadowColumns, setShadowColumns] = useState(
-    initialState.shadowColumns,
-  );
-  const [shadowPosition, setShadowPosition] = useState(
-    initialState.shadowPosition,
-  );
-  const [showShadow, setShowShadow] = useState(initialState.showShadow);
+  const [shadowColumns, setShadowColumns] = useState<BlockColumns>(1);
+  const [shadowPosition, setShadowPosition] = useState(0);
+  const [showShadow, setShowShadow] = useState(false);
 
   const restart = useCallback(() => {
     setRows([generateRow(), generateRow()]);
   }, []);
 
-  const setShadowState = useCallback<MainContextState['setShadowState']>(
+  const setShadowState = useCallback<GameContextState['setShadowState']>(
     newState => {
       if (newState.shadowColumns !== undefined) {
         setShadowColumns(newState.shadowColumns);
@@ -129,7 +113,7 @@ export const MainContextProvider = (props: MainContextProviderProps) => {
   );
 
   return (
-    <MainContext
+    <GameContext
       value={{
         matrixLayout,
         setMatrixLayout,
@@ -142,6 +126,14 @@ export const MainContextProvider = (props: MainContextProviderProps) => {
         setShadowState,
       }}>
       {props.children}
-    </MainContext>
+    </GameContext>
   );
 };
+
+export function useGameContext() {
+  const context = useContext(GameContext);
+  if (!context) {
+    throw new Error('useGameContext must be used within a GameContextProvider');
+  }
+  return context;
+}

@@ -1,6 +1,6 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import {View} from './components';
-import {MainContext} from './contexts/MainContext';
+import {useGameContext} from './contexts/GameContext';
 import MatrixBackground from './MatrixBackground';
 import useSizes from './hooks/useSizes';
 
@@ -11,7 +11,7 @@ interface MatrixProps {
 export default function Matrix(props: MatrixProps) {
   const {matrixWidth, matrixHeight, blockPixelSize} = useSizes();
   const {setMatrixLayout, showShadow, shadowPosition, shadowColumns} =
-    useContext(MainContext);
+    useGameContext();
 
   return (
     <View

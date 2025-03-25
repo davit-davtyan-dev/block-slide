@@ -1,13 +1,13 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import {Text, TouchableOpacity, View} from './components';
 import Matrix from './Matrix';
 import BlocksRow from './BlocksRow';
 import Block from './Block';
-import {MainContext} from './contexts/MainContext';
+import {useGameContext} from './contexts/GameContext';
 import {useTheme} from './contexts/ThemeContext';
 
 export default function GameScreen() {
-  const {rows, restart} = useContext(MainContext);
+  const {rows, restart} = useGameContext();
   const {theme} = useTheme();
 
   return (
