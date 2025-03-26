@@ -1,4 +1,4 @@
-import {createContext, useCallback, useContext, useState} from 'react';
+import {createContext, useCallback, useContext, useMemo, useState} from 'react';
 import {BLOCK_COLOR_COUNT} from './ThemeContext';
 import type {LayoutRectangle} from 'react-native';
 import type {Block, BlockColumns} from '../types';
@@ -17,6 +17,8 @@ type GameContextState = {
     shadowColumns?: BlockColumns;
     showShadow?: boolean;
   }) => void;
+  moveBlock: (blockId: string, newStartIndex: number) => void;
+  upcomingRow: Array<Block>;
 };
 
 const GameContext = createContext<GameContextState | undefined>(undefined);
@@ -89,6 +91,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
   const [rows, setRows] = useState(() => {
     return [generateRow(), generateRow()];
   });
+  const [upcomingRow, setUpcomingRow] = useState(generateRow);
   const [shadowColumns, setShadowColumns] = useState<BlockColumns>(1);
   const [shadowPosition, setShadowPosition] = useState(0);
   const [showShadow, setShowShadow] = useState(false);
@@ -112,22 +115,59 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
     [],
   );
 
-  return (
-    <GameContext
-      value={{
-        matrixLayout,
-        setMatrixLayout,
-        rows,
-        setRows,
-        restart,
-        shadowPosition,
-        shadowColumns,
-        showShadow,
-        setShadowState,
-      }}>
-      {props.children}
-    </GameContext>
+  const moveBlock = useCallback<GameContextState['moveBlock']>(
+    (blockId, newStartIndex) => {
+      setUpcomingRow(newRow => {
+        setRows(currentRows => {
+          return [
+            newRow,
+            ...currentRows.map(row => {
+              return row.map(block => {
+                if (block.id === blockId) {
+                  return {...block, startIndex: newStartIndex};
+                }
+                return block;
+              });
+            }),
+          ];
+        });
+
+        return generateRow();
+      });
+    },
+    [],
   );
+
+  const value = useMemo<GameContextState>(
+    () => ({
+      matrixLayout,
+      setMatrixLayout,
+      rows,
+      setRows,
+      restart,
+      shadowPosition,
+      shadowColumns,
+      showShadow,
+      setShadowState,
+      moveBlock,
+      upcomingRow,
+    }),
+    [
+      matrixLayout,
+      setMatrixLayout,
+      rows,
+      setRows,
+      restart,
+      shadowPosition,
+      shadowColumns,
+      showShadow,
+      setShadowState,
+      moveBlock,
+      upcomingRow,
+    ],
+  );
+
+  return <GameContext value={value}>{props.children}</GameContext>;
 };
 
 export function useGameContext() {
