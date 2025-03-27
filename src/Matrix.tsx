@@ -2,7 +2,7 @@ import React from 'react';
 import {View} from './components';
 import {useGameContext} from './contexts/GameContext';
 import MatrixBackground from './MatrixBackground';
-import useSizes from './hooks/useSizes';
+import {useSizes} from './contexts/SizesContext';
 
 interface MatrixProps {
   children: React.ReactNode;

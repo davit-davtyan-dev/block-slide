@@ -1,6 +1,6 @@
 import React from 'react';
 import {Row} from './components';
-import useSizes from './hooks/useSizes';
+import {useSizes} from './contexts/SizesContext';
 
 interface BlocksRowProps {
   index: number;

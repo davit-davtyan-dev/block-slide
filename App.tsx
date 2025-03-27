@@ -7,16 +7,19 @@
 
 import React from 'react';
 
-import {GameContextProvider} from './src/contexts/GameContext';
 import {ThemeProvider} from './src/contexts/ThemeContext';
+import {SizesProvider} from './src/contexts/SizesContext';
+import {GameContextProvider} from './src/contexts/GameContext';
 import GameScreen from './src/GameScreen';
 
 function App(): React.JSX.Element {
   return (
     <ThemeProvider>
-      <GameContextProvider>
-        <GameScreen />
-      </GameContextProvider>
+      <SizesProvider>
+        <GameContextProvider>
+          <GameScreen />
+        </GameContextProvider>
+      </SizesProvider>
     </ThemeProvider>
   );
 }

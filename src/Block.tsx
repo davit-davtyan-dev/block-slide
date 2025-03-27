@@ -2,7 +2,7 @@ import React, {useMemo, useRef, useState} from 'react';
 import {Animated, PanResponder, StyleSheet} from 'react-native';
 import {View} from './components';
 import {useGameContext} from './contexts/GameContext';
-import useSizes from './hooks/useSizes';
+import {useSizes} from './contexts/SizesContext';
 import {useTheme} from './contexts/ThemeContext';
 import {darkenColor} from './helpers';
 

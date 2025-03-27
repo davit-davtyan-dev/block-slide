@@ -1,6 +1,6 @@
 import React from 'react';
 import {Row, View} from './components';
-import useSizes from './hooks/useSizes';
+import {useSizes} from './contexts/SizesContext';
 
 export default function MatrixBackground() {
   const {martixColumns, martixRows, blockPixelSize} = useSizes();
