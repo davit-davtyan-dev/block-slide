@@ -111,7 +111,12 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
         shadowPositionRef.current.setValue(newState.shadowPosition);
       }
       if (newState.showShadow !== undefined) {
-        shadowOpacityRef.current.setValue(newState.showShadow ? 0.1 : 0);
+        if (newState.showShadow) {
+          shadowOpacityRef.current.setValue(0.1);
+        } else {
+          shadowOpacityRef.current.setValue(0);
+          shadowSizeRef.current.setValue(0);
+        }
       }
       if (newState.shadowColumns !== undefined) {
         shadowSizeRef.current.setValue(newState.shadowColumns * blockPixelSize);
