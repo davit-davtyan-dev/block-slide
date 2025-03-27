@@ -1,4 +1,5 @@
 import React from 'react';
+import {Animated, StyleSheet} from 'react-native';
 import {View} from './components';
 import {useGameContext} from './contexts/GameContext';
 import MatrixBackground from './MatrixBackground';
@@ -9,17 +10,11 @@ interface MatrixProps {
 }
 
 export default function Matrix(props: MatrixProps) {
-  const {matrixWidth, matrixHeight, blockPixelSize} = useSizes();
-  const {setMatrixLayout, showShadow, shadowPosition, shadowColumns} =
-    useGameContext();
+  const {matrixWidth, matrixHeight} = useSizes();
+  const {shadowPosition, shadowOpacity, shadowSize} = useGameContext();
 
   return (
-    <View
-      flex={1}
-      center
-      onLayout={event => {
-        setMatrixLayout(event.nativeEvent.layout);
-      }}>
+    <View flex={1} center>
       <View
         width={matrixWidth}
         height={matrixHeight}
@@ -27,19 +22,24 @@ export default function Matrix(props: MatrixProps) {
         bgColor="#282a2c">
         <MatrixBackground />
         {props.children}
-        {showShadow && (
-          <View
-            style={{
+        <Animated.View
+          style={[
+            styles.shadow,
+            {width: shadowSize, opacity: shadowOpacity},
+            {
               transform: [{translateX: shadowPosition}],
-            }}
-            position="absolute"
-            width={shadowColumns * blockPixelSize}
-            height="100%"
-            bgColor="white"
-            opacity={0.1}
-          />
-        )}
+            },
+          ]}
+        />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  shadow: {
+    position: 'absolute',
+    height: '100%',
+    backgroundColor: 'white',
+  },
+});

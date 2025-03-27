@@ -1,17 +1,23 @@
-import {createContext, useCallback, useContext, useMemo, useState} from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {Animated} from 'react-native';
 import {BLOCK_COLOR_COUNT} from './ThemeContext';
-import type {LayoutRectangle} from 'react-native';
+import {useSizes} from './SizesContext';
 import type {Block, BlockColumns} from '../types';
 
 type GameContextState = {
-  matrixLayout: LayoutRectangle | null;
-  setMatrixLayout: (matrixLayout: LayoutRectangle) => void;
   rows: Array<Array<Block>>;
   setRows: (rows: Array<Array<Block>>) => void;
   restart: () => void;
-  shadowColumns: BlockColumns;
-  shadowPosition: number;
-  showShadow: boolean;
+  shadowPosition: Animated.Value;
+  shadowOpacity: Animated.Value;
+  shadowSize: Animated.Value;
   setShadowState: (shadowState: {
     shadowPosition?: number;
     shadowColumns?: BlockColumns;
@@ -86,15 +92,14 @@ function generateRow() {
 }
 
 export const GameContextProvider = (props: GameContextProviderProps) => {
-  const [matrixLayout, setMatrixLayout] =
-    useState<GameContextState['matrixLayout']>(null);
+  const {blockPixelSize} = useSizes();
   const [rows, setRows] = useState(() => {
     return [generateRow(), generateRow()];
   });
   const [upcomingRow, setUpcomingRow] = useState(generateRow);
-  const [shadowColumns, setShadowColumns] = useState<BlockColumns>(1);
-  const [shadowPosition, setShadowPosition] = useState(0);
-  const [showShadow, setShowShadow] = useState(false);
+  const shadowPositionRef = useRef(new Animated.Value(0));
+  const shadowOpacityRef = useRef(new Animated.Value(0));
+  const shadowSizeRef = useRef(new Animated.Value(0));
 
   const restart = useCallback(() => {
     setRows([generateRow(), generateRow()]);
@@ -102,17 +107,17 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
 
   const setShadowState = useCallback<GameContextState['setShadowState']>(
     newState => {
-      if (newState.shadowColumns !== undefined) {
-        setShadowColumns(newState.shadowColumns);
-      }
       if (newState.shadowPosition !== undefined) {
-        setShadowPosition(newState.shadowPosition);
+        shadowPositionRef.current.setValue(newState.shadowPosition);
       }
       if (newState.showShadow !== undefined) {
-        setShowShadow(newState.showShadow);
+        shadowOpacityRef.current.setValue(newState.showShadow ? 0.1 : 0);
+      }
+      if (newState.shadowColumns !== undefined) {
+        shadowSizeRef.current.setValue(newState.shadowColumns * blockPixelSize);
       }
     },
-    [],
+    [blockPixelSize, shadowPositionRef, shadowOpacityRef, shadowSizeRef],
   );
 
   const moveBlock = useCallback<GameContextState['moveBlock']>(
@@ -140,27 +145,23 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
 
   const value = useMemo<GameContextState>(
     () => ({
-      matrixLayout,
-      setMatrixLayout,
       rows,
       setRows,
       restart,
-      shadowPosition,
-      shadowColumns,
-      showShadow,
+      shadowPosition: shadowPositionRef.current,
+      shadowOpacity: shadowOpacityRef.current,
+      shadowSize: shadowSizeRef.current,
       setShadowState,
       moveBlock,
       upcomingRow,
     }),
     [
-      matrixLayout,
-      setMatrixLayout,
       rows,
       setRows,
       restart,
-      shadowPosition,
-      shadowColumns,
-      showShadow,
+      shadowPositionRef,
+      shadowOpacityRef,
+      shadowSizeRef,
       setShadowState,
       moveBlock,
       upcomingRow,
