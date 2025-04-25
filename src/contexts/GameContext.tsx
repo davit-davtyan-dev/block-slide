@@ -54,10 +54,8 @@ function generateRow() {
       0,
       BLOCK_COLOR_COUNT - 1,
     );
-    const rangeStartNumber =
-      blocks.filter(item => item.columns === 1).length >= 3 ? 2 : 1;
     const blockColumn = getRandomNumberInRangeInclusive(
-      rangeStartNumber,
+      1,
       Math.min(4, blocksCount),
     ) as BlockColumns;
 
