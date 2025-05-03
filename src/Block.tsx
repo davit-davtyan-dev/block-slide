@@ -24,12 +24,13 @@ export default function Block(props: BlockProps) {
   const {setShadowState, moveBlock} = useGameContext();
 
   const width = props.block.columns * blockPixelSize;
-  const startPostion = props.block.startIndex * blockPixelSize;
   const min = (props.leftLimit || 0) * blockPixelSize;
   const max = (props.rightLimit || martixColumns) * blockPixelSize - width;
+  const initialX = props.block.initialX;
+  const initialY = props.block.initialY;
 
-  const pan = useRef(new Animated.ValueXY({x: startPostion, y: 0})).current;
-  const [latestPosition, setLatestPosition] = useState(startPostion);
+  const pan = useRef(new Animated.ValueXY({x: initialX, y: initialY})).current;
+  const [latestPosition, setLatestPosition] = useState(initialX);
   const [isMoving, setIsMoving] = useState(false);
 
   const panResponder = useMemo(
@@ -38,38 +39,36 @@ export default function Block(props: BlockProps) {
         onMoveShouldSetPanResponder: () => {
           return true;
         },
-        onPanResponderStart: () => {
-          console.log('START');
-        },
         onPanResponderMove: (_e, gestureState) => {
-          setShadowState({
-            shadowColumns: props.block.columns,
-            shadowPosition: startPostion,
-            showShadow: true,
+          function setPanValue(value: number) {
+            pan.setValue({x: value, y: initialY});
+            setShadowState(() => ({
+              shadowPosition: roundToNearestMultiple(value, blockPixelSize),
+            }));
+          }
+
+          setShadowState(oldShadowState => {
+            console.log(oldShadowState.showShadow, 'oldShadowState.showShadow');
+            if (oldShadowState.showShadow) {
+              return;
+            }
+            return {
+              shadowColumns: props.block.columns,
+              shadowPosition: initialX,
+              showShadow: true,
+            };
           });
           setIsMoving(true);
 
           if (gestureState.dx + latestPosition <= min) {
-            pan.setValue({x: min, y: gestureState.dy});
-            setShadowState({shadowPosition: min});
+            setPanValue(min);
             return;
           }
           if (gestureState.dx + latestPosition >= max) {
-            pan.setValue({x: max, y: gestureState.dy});
-            setShadowState({shadowPosition: max});
+            setPanValue(max);
             return;
           }
-          pan.setValue({
-            x: gestureState.dx + latestPosition,
-            y: gestureState.dy,
-          });
-
-          setShadowState({
-            shadowPosition: roundToNearestMultiple(
-              gestureState.dx + latestPosition,
-              blockPixelSize,
-            ),
-          });
+          setPanValue(gestureState.dx + latestPosition);
         },
         onPanResponderRelease: (_e, gestureState) => {
           setLatestPosition(oldValue => {
@@ -83,15 +82,15 @@ export default function Block(props: BlockProps) {
             if (gestureState.dx + latestPosition >= max) {
               newLatestPosition = max;
             }
-            pan.setValue({x: newLatestPosition, y: gestureState.dy});
-            const newStartIndex = newLatestPosition / blockPixelSize;
-            if (newStartIndex !== props.block.startIndex) {
-              moveBlock(props.block.id, newStartIndex);
+            pan.setValue({x: newLatestPosition, y: initialY});
+            const newColumnIndex = newLatestPosition / blockPixelSize;
+            if (newColumnIndex !== props.block.columnIndex) {
+              moveBlock(props.block.id, newColumnIndex);
             }
             return newLatestPosition;
           });
           pan.flattenOffset();
-          setShadowState({showShadow: false});
+          setShadowState(() => ({showShadow: false}));
           setIsMoving(false);
         },
       }),
@@ -103,10 +102,11 @@ export default function Block(props: BlockProps) {
       blockPixelSize,
       props.block.id,
       props.block.columns,
-      props.block.startIndex,
+      props.block.columnIndex,
       moveBlock,
       setShadowState,
-      startPostion,
+      initialX,
+      initialY,
     ],
   );
 
@@ -117,7 +117,7 @@ export default function Block(props: BlockProps) {
       <Animated.View
         style={[
           {
-            transform: [{translateX: pan.x}],
+            transform: [{translateX: pan.x}, {translateY: pan.y}],
           },
           styles.blockContainer,
           isMoving && styles.movingBlock,

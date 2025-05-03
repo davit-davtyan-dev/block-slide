@@ -14,12 +14,8 @@ export default function Matrix(props: MatrixProps) {
   const {shadowPosition, shadowOpacity, shadowSize} = useGameContext();
 
   return (
-    <View flex={1} center>
-      <View
-        width={matrixWidth}
-        height={matrixHeight}
-        position="relative"
-        bgColor="#282a2c">
+    <View center>
+      <View width={matrixWidth} height={matrixHeight} bgColor="#282a2c">
         <MatrixBackground />
         {props.children}
         <Animated.View

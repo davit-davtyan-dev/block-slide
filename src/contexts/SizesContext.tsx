@@ -26,7 +26,7 @@ export const SizesProvider: React.FC<{children: React.ReactNode}> = ({
   const matrixWidth = blockPixelSize * martixColumns;
   const matrixHeight = blockPixelSize * martixRows;
 
-  const value = useMemo(
+  const value = useMemo<SizesContextType>(
     () => ({
       matrixWidth,
       matrixHeight,
