@@ -41,3 +41,9 @@ export function darkenColor(hexColor: HexColor, factor: number): HexColor {
     .toString(16)
     .padStart(2, '0')}${darkenedB.toString(16).padStart(2, '0')}`;
 }
+
+export function getRandomNumberInRangeInclusive(a: number, b: number) {
+  const diff = Math.abs(a - b);
+  const rangeStart = Math.min(a, b);
+  return Math.round(Math.random() * diff) + rangeStart;
+}

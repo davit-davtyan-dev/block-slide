@@ -1,13 +1,9 @@
 import {useCallback} from 'react';
 import {useSizes} from '../contexts/SizesContext';
 import {BLOCK_COLOR_COUNT} from '../contexts/ThemeContext';
-import type {Block, BlockColumns} from '../types';
+import {getRandomNumberInRangeInclusive} from '../helpers';
 
-function getRandomNumberInRangeInclusive(a: number, b: number) {
-  const diff = Math.abs(a - b);
-  const rangeStart = Math.min(a, b);
-  return Math.round(Math.random() * diff) + rangeStart;
-}
+import type {Block, BlockColumns} from '../types';
 
 export default function useGenerateRow() {
   const {blockPixelSize, martixRows} = useSizes();
