@@ -59,14 +59,12 @@ export default function useGenerateRow() {
         if (index === gapIndexInArray) {
           currentBlockColumnIndex += gapsCount;
         }
-        const initialX = item.columnIndex * blockPixelSize;
-        const initialY = blockPixelSize * (martixRows - item.rowIndex);
         acc.push({
           ...item,
           id: `${item.id}-${currentBlockColumnIndex}`,
           columnIndex: currentBlockColumnIndex,
-          initialX,
-          initialY,
+          initialX: currentBlockColumnIndex * blockPixelSize,
+          initialY: blockPixelSize * (martixRows - item.rowIndex),
         });
 
         return acc;
