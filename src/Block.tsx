@@ -1,4 +1,4 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {Animated, PanResponder, StyleSheet} from 'react-native';
 import {View} from './components';
 import {useGameContext} from './contexts/GameContext';
@@ -33,6 +33,14 @@ export default function Block(props: BlockProps) {
   const [latestPosition, setLatestPosition] = useState(initialX);
   const [isMoving, setIsMoving] = useState(false);
 
+  useEffect(() => {
+    Animated.timing(pan.y, {
+      toValue: initialY,
+      duration: 75,
+      useNativeDriver: true,
+    }).start();
+  }, [initialY, pan]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -48,7 +56,6 @@ export default function Block(props: BlockProps) {
           }
 
           setShadowState(oldShadowState => {
-            console.log(oldShadowState.showShadow, 'oldShadowState.showShadow');
             if (oldShadowState.showShadow) {
               return;
             }

@@ -1,4 +1,4 @@
-import type {HexColor} from './types';
+import type {Block, HexColor} from './types';
 
 function validateHexColor(color: string): color is HexColor {
   return /^#[0-9A-Fa-f]{6}$/.test(color);
@@ -46,4 +46,13 @@ export function getRandomNumberInRangeInclusive(a: number, b: number) {
   const diff = Math.abs(a - b);
   const rangeStart = Math.min(a, b);
   return Math.round(Math.random() * diff) + rangeStart;
+}
+
+export function doBlocksOverlap(blockA: Block, blockB: Block) {
+  const blockAStart = blockA.columnIndex;
+  const blockAEnd = blockA.columnIndex + blockA.columns;
+  const blockBStart = blockB.columnIndex;
+  const blockBEnd = blockB.columnIndex + blockB.columns;
+
+  return Math.max(blockAStart, blockBStart) < Math.min(blockAEnd, blockBEnd);
 }

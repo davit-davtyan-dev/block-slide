@@ -9,6 +9,7 @@ import {
 import {Animated} from 'react-native';
 import {useSizes} from './SizesContext';
 import useGenerateRow from '../hooks/useGenerateRow';
+import useUpdateBlockPositionsWithGravity from '../hooks/useUpdateBlockPositionsWithGravity';
 import type {Block, BlockColumns} from '../types';
 
 type ShadowState = {
@@ -36,6 +37,7 @@ type GameContextProviderProps = {children: React.ReactNode};
 export const GameContextProvider = (props: GameContextProviderProps) => {
   const {blockPixelSize} = useSizes();
   const generateRow = useGenerateRow();
+  const updateBlockPositionsWithGravity = useUpdateBlockPositionsWithGravity();
   const [blocks, setBlocks] = useState(() => [
     ...generateRow(0),
     ...generateRow(1),
@@ -89,16 +91,19 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
 
   const moveBlock = useCallback<GameContextState['moveBlock']>(
     (blockId, newColumnIndex) => {
-      setBlocks(oldBlocks =>
-        oldBlocks.map(block => {
-          if (block.id === blockId) {
-            return {...block, columnIndex: newColumnIndex};
-          }
-          return block;
-        }),
-      );
+      setBlocks(oldBlocks => {
+        const newBlocks = updateBlockPositionsWithGravity(
+          oldBlocks.map(block => {
+            if (block.id === blockId) {
+              return {...block, columnIndex: newColumnIndex};
+            }
+            return block;
+          }),
+        );
+        return newBlocks;
+      });
     },
-    [],
+    [updateBlockPositionsWithGravity],
   );
 
   const value = useMemo<GameContextState>(
