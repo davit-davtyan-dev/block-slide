@@ -6,7 +6,7 @@ import {useSizes} from './contexts/SizesContext';
 import {useTheme} from './contexts/ThemeContext';
 import {darkenColor} from './helpers';
 
-import type {Block} from './types';
+import type {Block, BlockColumns} from './types';
 
 interface BlockProps {
   block: Block;
@@ -92,7 +92,7 @@ export default function Block(props: BlockProps) {
             pan.setValue({x: newLatestPosition, y: initialY});
             const newColumnIndex = newLatestPosition / blockPixelSize;
             if (newColumnIndex !== props.block.columnIndex) {
-              moveBlock(props.block.id, newColumnIndex);
+              moveBlock(props.block.id, newColumnIndex as BlockColumns);
             }
             return newLatestPosition;
           });

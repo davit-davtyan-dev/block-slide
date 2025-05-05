@@ -27,7 +27,7 @@ type GameContextState = {
   setShadowState: (
     callback: (oldShadowState: ShadowState) => ShadowState | undefined,
   ) => void;
-  moveBlock: (blockId: string, newColumnIndex: number) => void;
+  moveBlock: (blockId: string, newColumnIndex: BlockColumns) => void;
 };
 
 const GameContext = createContext<GameContextState | undefined>(undefined);
