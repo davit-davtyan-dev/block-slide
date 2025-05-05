@@ -1,4 +1,5 @@
 import {useCallback} from 'react';
+import {Animated} from 'react-native';
 import {useSizes} from '../contexts/SizesContext';
 import {doBlocksOverlap} from '../helpers';
 import type {Block} from '../types';
@@ -35,6 +36,11 @@ export default function useUpdateBlockPositionsWithGravity() {
           block.rowIndex = nearestBlockBelowIndex + 1;
         }
         block.initialY = blockPixelSize * (martixRows - block.rowIndex);
+        Animated.timing(block.pan.y, {
+          toValue: block.initialY,
+          duration: 75,
+          useNativeDriver: true,
+        }).start();
         newBlocks.push(block);
       }
 

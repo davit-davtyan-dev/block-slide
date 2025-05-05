@@ -1,4 +1,5 @@
 import {useCallback} from 'react';
+import {Animated} from 'react-native';
 import {useSizes} from '../contexts/SizesContext';
 import {BLOCK_COLOR_COUNT} from '../contexts/ThemeContext';
 import {getRandomNumberInRangeInclusive} from '../helpers';
@@ -40,6 +41,7 @@ export default function useGenerateRow() {
           rowIndex: rowIndex,
           initialX: 0,
           initialY: 0,
+          pan: new Animated.ValueXY({x: 0, y: 0}),
         });
       }
 
@@ -55,13 +57,18 @@ export default function useGenerateRow() {
         if (index === gapIndexInArray) {
           currentBlockColumnIndex += gapsCount;
         }
+
+        const initialX = currentBlockColumnIndex * blockPixelSize;
+        const initialY = blockPixelSize * (martixRows - item.rowIndex);
+
         acc.push({
           ...item,
           id: `${item.id}-${currentBlockColumnIndex}`,
           columnIndex: currentBlockColumnIndex,
-          initialX: currentBlockColumnIndex * blockPixelSize,
-          initialY: blockPixelSize * (martixRows - item.rowIndex),
+          initialX,
+          initialY,
         });
+        item.pan.setValue({x: initialX, y: initialY});
 
         return acc;
       }, [] as Array<Block>);

@@ -42,6 +42,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
     ...generateRow(0),
     ...generateRow(1),
     ...generateRow(2),
+    ...generateRow(3),
   ]);
 
   const shadowPositionRef = useRef(new Animated.Value(0));
@@ -54,7 +55,12 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
   });
 
   const restart = useCallback(() => {
-    setBlocks([...generateRow(0), ...generateRow(1), ...generateRow(2)]);
+    setBlocks([
+      ...generateRow(0),
+      ...generateRow(1),
+      ...generateRow(2),
+      ...generateRow(3),
+    ]);
   }, [generateRow]);
 
   const setShadowState = useCallback<GameContextState['setShadowState']>(
