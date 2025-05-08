@@ -34,16 +34,41 @@ const GameContext = createContext<GameContextState | undefined>(undefined);
 
 type GameContextProviderProps = {children: React.ReactNode};
 
+function removeCompletedRows(blocks: Array<Block>, martixColumns: number) {
+  const rowColumnsByRowIndex = blocks.reduce((acc, block) => {
+    acc[block.rowIndex] = (acc[block.rowIndex] ?? 0) + block.columns;
+    return acc;
+  }, {} as {[rowIndex: string]: number});
+
+  const completedRows = Object.keys(rowColumnsByRowIndex)
+    .filter(rowIndex => rowColumnsByRowIndex[rowIndex] === martixColumns)
+    .map(Number);
+
+  return blocks.filter(block => !completedRows.includes(block.rowIndex));
+}
+
 export const GameContextProvider = (props: GameContextProviderProps) => {
-  const {blockPixelSize} = useSizes();
+  const {blockPixelSize, martixColumns} = useSizes();
   const generateRow = useGenerateRow();
-  const updateBlockPositionsWithGravity = useUpdateBlockPositionsWithGravity();
   const [blocks, setBlocks] = useState(() => [
     ...generateRow(0),
     ...generateRow(1),
     ...generateRow(2),
     ...generateRow(3),
   ]);
+  const updateBlockPositionsWithGravity = useUpdateBlockPositionsWithGravity(
+    useCallback(() => {
+      setBlocks(oldBlocks => {
+        const newBlocks = removeCompletedRows(oldBlocks, martixColumns);
+        if (newBlocks.length === oldBlocks.length) {
+          return [...newBlocks, ...generateRow(0)];
+        } else {
+          updateBlockPositionsWithGravity(newBlocks);
+          return newBlocks;
+        }
+      });
+    }, [martixColumns, generateRow]),
+  );
 
   const shadowPositionRef = useRef(new Animated.Value(0));
   const shadowOpacityRef = useRef(new Animated.Value(0));

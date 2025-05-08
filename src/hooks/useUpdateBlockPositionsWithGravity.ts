@@ -4,7 +4,9 @@ import {useSizes} from '../contexts/SizesContext';
 import {doBlocksOverlap} from '../helpers';
 import type {Block} from '../types';
 
-export default function useUpdateBlockPositionsWithGravity() {
+export default function useUpdateBlockPositionsWithGravity(
+  afterAnimation: () => void,
+) {
   const {blockPixelSize, martixRows} = useSizes();
 
   return useCallback(
@@ -15,6 +17,7 @@ export default function useUpdateBlockPositionsWithGravity() {
       const reversedOrderedBlocks = [...orderedBlocks].reverse();
 
       const newBlocks: Array<Block> = [];
+      const animations: Array<Animated.CompositeAnimation> = [];
 
       for (const block of orderedBlocks) {
         if (block.rowIndex <= 1) {
@@ -27,6 +30,7 @@ export default function useUpdateBlockPositionsWithGravity() {
             blockBelow.rowIndex < block.rowIndex &&
             doBlocksOverlap(block, blockBelow),
         );
+        const oldRowIndex = block.rowIndex;
         if (!nearestBlocksBelow.length) {
           block.rowIndex = 1;
         } else {
@@ -36,16 +40,26 @@ export default function useUpdateBlockPositionsWithGravity() {
           block.rowIndex = nearestBlockBelowIndex + 1;
         }
         block.initialY = blockPixelSize * (martixRows - block.rowIndex);
-        Animated.timing(block.pan.y, {
-          toValue: block.initialY,
-          duration: 75,
-          useNativeDriver: true,
-        }).start();
+        if (oldRowIndex !== block.rowIndex) {
+          animations.push(
+            Animated.timing(block.pan.y, {
+              toValue: block.initialY,
+              duration: 75,
+              useNativeDriver: true,
+            }),
+          );
+        }
         newBlocks.push(block);
       }
 
+      if (animations.length) {
+        Animated.parallel(animations).start(({finished}) => {
+          console.log('finished', finished);
+          afterAnimation();
+        });
+      }
       return newBlocks;
     },
-    [blockPixelSize, martixRows],
+    [blockPixelSize, martixRows, afterAnimation],
   );
 }
