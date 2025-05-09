@@ -56,3 +56,24 @@ export function doBlocksOverlap(blockA: Block, blockB: Block) {
 
   return Math.max(blockAStart, blockBStart) < Math.min(blockAEnd, blockBEnd);
 }
+
+/**
+ * Adds opacity to a hex color
+ * @param hexColor The hex color to add opacity to
+ * @param opacity The opacity value from 0 to 1
+ * @returns The hex color with opacity
+ */
+export function addOpacityToHex(hexColor: HexColor, opacity: number): string {
+  if (!validateHexColor(hexColor as HexColor)) {
+    throw new Error('Please provide a valid hex color!');
+  }
+  if (opacity < 0 || opacity > 1) {
+    throw new Error('Opacity must be between 0 and 1');
+  }
+
+  // Convert opacity to hex (0-255)
+  const opacityHex = Math.round(opacity * 255)
+    .toString(16)
+    .padStart(2, '0');
+  return `${hexColor}${opacityHex}`;
+}

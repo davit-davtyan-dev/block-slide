@@ -3,6 +3,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Animated, StyleSheet, TouchableOpacity, Dimensions} from 'react-native';
 import {View, Text, Divider} from '.';
 import {useTheme, themes} from '../contexts/ThemeContext';
+import {addOpacityToHex} from '../helpers';
 
 import {ColorScheme} from '../hooks/useColorScheme';
 import type {ThemeNames} from '../contexts/ThemeContext';
@@ -139,33 +140,54 @@ export default function SideMenu({isVisible, onClose}: SideMenuProps) {
           <Text fontSize={16} fontWeight="bold" mb={8} color={theme.mainColor}>
             Color Scheme
           </Text>
-          <View style={styles.options}>
+          <View style={styles.colorSchemeOptions}>
             <TouchableOpacity
               style={[
-                styles.textButton,
-                colorScheme === ColorScheme.Light && styles.textButtonSelected,
-                {borderColor: theme.mainColor},
+                styles.colorSchemeButton,
+                colorScheme === ColorScheme.Light && {
+                  backgroundColor: addOpacityToHex(theme.mainColor, 0.2),
+                  borderColor: theme.mainColor,
+                },
               ]}
               onPress={() => setColorScheme(ColorScheme.Light)}>
-              <Text color={theme.mainColor}>Light</Text>
+              <Icon name="wb-sunny" size={24} color={theme.mainColor} />
+              <Text
+                color={theme.mainColor}
+                style={styles.colorSchemeButtonText}>
+                Light
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
-                styles.textButton,
-                colorScheme === ColorScheme.Dark && styles.textButtonSelected,
-                {borderColor: theme.mainColor},
+                styles.colorSchemeButton,
+                colorScheme === ColorScheme.Dark && {
+                  backgroundColor: addOpacityToHex(theme.mainColor, 0.2),
+                  borderColor: theme.mainColor,
+                },
               ]}
               onPress={() => setColorScheme(ColorScheme.Dark)}>
-              <Text color={theme.mainColor}>Dark</Text>
+              <Icon name="nightlight-round" size={24} color={theme.mainColor} />
+              <Text
+                color={theme.mainColor}
+                style={styles.colorSchemeButtonText}>
+                Dark
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
-                styles.textButton,
-                colorScheme === ColorScheme.System && styles.textButtonSelected,
-                {borderColor: theme.mainColor},
+                styles.colorSchemeButton,
+                colorScheme === ColorScheme.System && {
+                  backgroundColor: addOpacityToHex(theme.mainColor, 0.2),
+                  borderColor: theme.mainColor,
+                },
               ]}
               onPress={() => setColorScheme(ColorScheme.System)}>
-              <Text color={theme.mainColor}>System</Text>
+              <Icon name="settings" size={24} color={theme.mainColor} />
+              <Text
+                color={theme.mainColor}
+                style={styles.colorSchemeButtonText}>
+                System
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -293,5 +315,20 @@ const styles = StyleSheet.create({
     height: themeButtonSelectedInnerSize,
     borderRadius: themeButtonSelectedInnerSize / 2,
     position: 'absolute',
+  },
+  colorSchemeOptions: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  colorSchemeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  colorSchemeButtonText: {
+    marginLeft: 8,
   },
 });

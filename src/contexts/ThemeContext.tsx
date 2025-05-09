@@ -11,8 +11,8 @@ import {HexColor} from '../types';
 export const BLOCK_COLOR_COUNT = 5;
 
 interface Theme {
-  mainColor: string;
-  backgroundColor: string;
+  mainColor: HexColor;
+  backgroundColor: HexColor;
   /** Ensure this type definition matches the length of BLOCK_COLOR_COUNT */
   blockColorOptions: [HexColor, HexColor, HexColor, HexColor, HexColor];
 }
