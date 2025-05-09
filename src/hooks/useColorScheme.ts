@@ -2,7 +2,16 @@ import {useCallback, useEffect, useState} from 'react';
 import {useAsyncStorage} from '@react-native-async-storage/async-storage';
 import {useColorScheme as useReactNativeColorScheme} from 'react-native';
 
-export type ColorScheme = 'dark' | 'light';
+export enum ColorScheme {
+  Dark = 'dark',
+  Light = 'light',
+  System = 'system',
+}
+
+export enum EffectiveColorScheme {
+  Dark = 'dark',
+  Light = 'light',
+}
 
 export default function useColorScheme(): [
   ColorScheme,
@@ -11,7 +20,7 @@ export default function useColorScheme(): [
   const {getItem, setItem} = useAsyncStorage('COLOR_SCHEME');
   const deviceColorScheme = useReactNativeColorScheme();
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(
-    deviceColorScheme || 'dark',
+    deviceColorScheme === 'light' ? ColorScheme.Light : ColorScheme.Dark,
   );
 
   useEffect(() => {

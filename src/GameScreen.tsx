@@ -1,7 +1,9 @@
-import React from 'react';
+import React, {useState} from 'react';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import {Row, Text, TouchableOpacity, View} from './components';
 import Matrix from './Matrix';
 import BlockComponent from './Block';
+import SideMenu from './components/SideMenu';
 import {useGameContext} from './contexts/GameContext';
 import {useTheme} from './contexts/ThemeContext';
 import {useSizes} from './contexts/SizesContext';
@@ -11,6 +13,7 @@ export default function GameScreen() {
   const {blockPixelSize, matrixWidth} = useSizes();
   const {blocks, restart} = useGameContext();
   const {theme} = useTheme();
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
 
   const [upcomingBlocks, blocksToRender] = [...blocks]
     .sort((a, b) => (a.columnIndex > b.columnIndex ? 1 : -1))
@@ -39,6 +42,16 @@ export default function GameScreen() {
 
   return (
     <View center h="100%" bgColor={theme.backgroundColor}>
+      <View position="absolute" top={8} left={8}>
+        <TouchableOpacity
+          onPress={() => setIsMenuVisible(true)}
+          p={8}
+          borderRadius={8}
+          bgColor={theme.mainColor}>
+          <Icon name="menu" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity
         mt={8}
         py={2}
@@ -49,6 +62,7 @@ export default function GameScreen() {
         borderColor="white">
         <Text color="white">Restart</Text>
       </TouchableOpacity>
+
       <Matrix>
         {blocksToRender.map(block => {
           const blocksOfTheSameRow = sortedBlocksByRow[block.rowIndex];
@@ -76,6 +90,7 @@ export default function GameScreen() {
           );
         })}
       </Matrix>
+
       <Row position="relative" marginTop={6} width={matrixWidth}>
         {upcomingBlocks.map(block => (
           <View
@@ -91,6 +106,11 @@ export default function GameScreen() {
           />
         ))}
       </Row>
+
+      <SideMenu
+        isVisible={isMenuVisible}
+        onClose={() => setIsMenuVisible(false)}
+      />
     </View>
   );
 }

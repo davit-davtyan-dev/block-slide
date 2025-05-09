@@ -1,6 +1,9 @@
 import React, {createContext, useState, useMemo, useContext} from 'react';
-import useColorScheme, {ColorScheme} from '../hooks/useColorScheme';
-import {StatusBar} from 'react-native';
+import useColorScheme, {
+  ColorScheme,
+  EffectiveColorScheme,
+} from '../hooks/useColorScheme';
+import {StatusBar, useColorScheme as useDeviceColorScheme} from 'react-native';
 import {View} from '../components';
 import {HexColor} from '../types';
 
@@ -14,10 +17,7 @@ interface Theme {
   blockColorOptions: [HexColor, HexColor, HexColor, HexColor, HexColor];
 }
 
-interface ThemeMap {
-  light: Theme;
-  dark: Theme;
-}
+type ThemeMap = Record<EffectiveColorScheme, Theme>;
 
 export enum ThemeNames {
   Pastel = 'Pastel',
@@ -29,7 +29,7 @@ export enum ThemeNames {
 
 export const themes: Record<ThemeNames, ThemeMap> = {
   [ThemeNames.Pastel]: {
-    light: {
+    [EffectiveColorScheme.Light]: {
       mainColor: '#FFB3BA',
       backgroundColor: '#FFF0F0',
       blockColorOptions: [
@@ -40,7 +40,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#BAE1FF',
       ],
     },
-    dark: {
+    [EffectiveColorScheme.Dark]: {
       mainColor: '#FF6961',
       backgroundColor: '#330000',
       blockColorOptions: [
@@ -53,7 +53,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
     },
   },
   [ThemeNames.HighContrast]: {
-    light: {
+    [EffectiveColorScheme.Light]: {
       mainColor: '#000000',
       backgroundColor: '#FFFFFF',
       blockColorOptions: [
@@ -64,7 +64,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#0000FF',
       ],
     },
-    dark: {
+    [EffectiveColorScheme.Dark]: {
       mainColor: '#FFFFFF',
       backgroundColor: '#000000',
       blockColorOptions: [
@@ -77,7 +77,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
     },
   },
   [ThemeNames.Retro]: {
-    light: {
+    [EffectiveColorScheme.Light]: {
       mainColor: '#FFD700',
       backgroundColor: '#F5F5DC',
       blockColorOptions: [
@@ -88,7 +88,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#1E90FF',
       ],
     },
-    dark: {
+    [EffectiveColorScheme.Dark]: {
       mainColor: '#DAA520',
       backgroundColor: '#2F4F4F',
       blockColorOptions: [
@@ -101,7 +101,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
     },
   },
   [ThemeNames.EightBit]: {
-    light: {
+    [EffectiveColorScheme.Light]: {
       mainColor: '#00FF00',
       backgroundColor: '#0000FF',
       blockColorOptions: [
@@ -112,7 +112,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#FF00FF',
       ],
     },
-    dark: {
+    [EffectiveColorScheme.Dark]: {
       mainColor: '#00FF00',
       backgroundColor: '#000000',
       blockColorOptions: [
@@ -125,7 +125,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
     },
   },
   [ThemeNames.Terminal]: {
-    light: {
+    [EffectiveColorScheme.Light]: {
       mainColor: '#00FF00',
       backgroundColor: '#000000',
       blockColorOptions: [
@@ -136,7 +136,7 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#FF00FF',
       ],
     },
-    dark: {
+    [EffectiveColorScheme.Dark]: {
       mainColor: '#00FF00',
       backgroundColor: '#000000',
       blockColorOptions: [
@@ -159,6 +159,7 @@ interface ThemeContextType {
   theme: Theme;
   setColorScheme: (value: ColorScheme) => void;
   colorScheme: ColorScheme;
+  effectiveColorScheme: EffectiveColorScheme;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -167,27 +168,42 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
   children,
 }) => {
   const [colorScheme, setColorScheme] = useColorScheme();
+  const deviceColorScheme = useDeviceColorScheme();
   const [themeName, setThemeName] = useState(defaultTheme);
 
-  const theme: Theme = useMemo(() => {
-    return themes[themeName][colorScheme];
-  }, [themeName, colorScheme]);
+  const effectiveColorScheme =
+    colorScheme === ColorScheme.System
+      ? deviceColorScheme === 'light'
+        ? EffectiveColorScheme.Light
+        : EffectiveColorScheme.Dark
+      : colorScheme === ColorScheme.Light
+      ? EffectiveColorScheme.Light
+      : EffectiveColorScheme.Dark;
 
-  const value = useMemo(
+  const theme: Theme = useMemo(() => {
+    return themes[themeName][effectiveColorScheme];
+  }, [themeName, effectiveColorScheme]);
+
+  const value = useMemo<ThemeContextType>(
     () => ({
       themeName,
       setThemeName,
       theme,
       setColorScheme,
       colorScheme,
+      effectiveColorScheme,
     }),
-    [themeName, theme, setColorScheme, colorScheme],
+    [themeName, theme, setColorScheme, colorScheme, effectiveColorScheme],
   );
 
   return (
     <ThemeContext.Provider value={value}>
       <StatusBar
-        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle={
+          effectiveColorScheme === EffectiveColorScheme.Dark
+            ? 'light-content'
+            : 'dark-content'
+        }
       />
       <View height={StatusBar.currentHeight} bgColor={theme.backgroundColor} />
       {children}
