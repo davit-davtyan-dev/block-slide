@@ -39,11 +39,11 @@ export default function useUpdateBlockPositionsWithGravity(
           );
           block.rowIndex = nearestBlockBelowIndex + 1;
         }
-        block.initialY = blockPixelSize * (martixRows - block.rowIndex);
+        block.y = blockPixelSize * (martixRows - block.rowIndex);
         if (oldRowIndex !== block.rowIndex) {
           animations.push(
             Animated.timing(block.pan.y, {
-              toValue: block.initialY,
+              toValue: block.y,
               duration: 75,
               useNativeDriver: true,
             }),

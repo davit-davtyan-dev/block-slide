@@ -1,5 +1,7 @@
 import {useCallback} from 'react';
 import {Animated} from 'react-native';
+import 'react-native-get-random-values';
+import {v4 as uuidv4} from 'uuid';
 import {useSizes} from '../contexts/SizesContext';
 import {BLOCK_COLOR_COUNT} from '../contexts/ThemeContext';
 import {getRandomNumberInRangeInclusive} from '../helpers';
@@ -34,14 +36,22 @@ export default function useGenerateRow() {
 
         blocksCount -= blockColumn;
         blocks.push({
-          id: `${rowIndex}-${blockColumn}-${colorIndex}`,
+          id: uuidv4(),
           columns: blockColumn,
           colorIndex,
           columnIndex: 0,
           rowIndex: rowIndex,
-          initialX: 0,
-          initialY: 0,
+          x: 0,
+          y: 0,
           pan: new Animated.ValueXY({x: 0, y: 0}),
+          ...(__DEV__ && {
+            debug: {
+              initialRowIndex: rowIndex,
+              initialColumnIndex: 0,
+              initialX: 0,
+              initialY: 0,
+            },
+          }),
         });
       }
 
@@ -58,17 +68,24 @@ export default function useGenerateRow() {
           currentBlockColumnIndex += gapsCount;
         }
 
-        const initialX = currentBlockColumnIndex * blockPixelSize;
-        const initialY = blockPixelSize * (martixRows - item.rowIndex);
+        const x = currentBlockColumnIndex * blockPixelSize;
+        const y = blockPixelSize * (martixRows - item.rowIndex);
 
         acc.push({
           ...item,
-          id: `${item.id}-${currentBlockColumnIndex}`,
           columnIndex: currentBlockColumnIndex,
-          initialX,
-          initialY,
+          x,
+          y,
+          ...(__DEV__ && {
+            debug: {
+              initialRowIndex: item.rowIndex,
+              initialColumnIndex: currentBlockColumnIndex,
+              initialX: x,
+              initialY: y,
+            },
+          }),
         });
-        item.pan.setValue({x: initialX, y: initialY});
+        item.pan.setValue({x, y});
 
         return acc;
       }, [] as Array<Block>);

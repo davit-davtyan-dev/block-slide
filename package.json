@@ -15,7 +15,9 @@
     "@react-native-community/hooks": "^100.1.0",
     "react": "19.0.0",
     "react-native": "0.78.0",
-    "react-native-vector-icons": "^10.2.0"
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-vector-icons": "^10.2.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

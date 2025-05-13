@@ -1,6 +1,5 @@
 import React, {useMemo, useState} from 'react';
 import {Animated, PanResponder, StyleSheet} from 'react-native';
-import {View} from './components';
 import {useGameContext} from './contexts/GameContext';
 import {useSizes} from './contexts/SizesContext';
 import {useTheme} from './contexts/ThemeContext';
@@ -20,17 +19,17 @@ function roundToNearestMultiple(num: number, multiple: number) {
 
 export default function Block(props: BlockProps) {
   const {blockPixelSize, martixColumns} = useSizes();
-  const {theme} = useTheme();
+  const {theme, themeAnimation} = useTheme();
   const {setShadowState, moveBlock} = useGameContext();
 
   const width = props.block.columns * blockPixelSize;
   const min = (props.leftLimit || 0) * blockPixelSize;
   const max = (props.rightLimit || martixColumns) * blockPixelSize - width;
-  const initialX = props.block.initialX;
-  const initialY = props.block.initialY;
-
   const pan = props.block.pan;
-  const [latestPosition, setLatestPosition] = useState(initialX);
+  const x = props.block.x;
+  const y = props.block.y;
+
+  const [latestPosition, setLatestPosition] = useState(x);
   const [isMoving, setIsMoving] = useState(false);
 
   const panResponder = useMemo(
@@ -41,7 +40,7 @@ export default function Block(props: BlockProps) {
         },
         onPanResponderMove: (_e, gestureState) => {
           function setPanValue(value: number) {
-            pan.setValue({x: value, y: initialY});
+            pan.setValue({x: value, y: y});
             setShadowState(() => ({
               shadowPosition: roundToNearestMultiple(value, blockPixelSize),
             }));
@@ -53,7 +52,7 @@ export default function Block(props: BlockProps) {
             }
             return {
               shadowColumns: props.block.columns,
-              shadowPosition: initialX,
+              shadowPosition: x,
               showShadow: true,
             };
           });
@@ -81,7 +80,7 @@ export default function Block(props: BlockProps) {
             if (gestureState.dx + latestPosition >= max) {
               newLatestPosition = max;
             }
-            pan.setValue({x: newLatestPosition, y: initialY});
+            pan.setValue({x: newLatestPosition, y: y});
             const newColumnIndex = newLatestPosition / blockPixelSize;
             if (newColumnIndex !== props.block.columnIndex) {
               moveBlock(props.block.id, newColumnIndex as BlockColumns);
@@ -104,12 +103,21 @@ export default function Block(props: BlockProps) {
       props.block.columnIndex,
       moveBlock,
       setShadowState,
-      initialX,
-      initialY,
+      x,
+      y,
     ],
   );
 
   const color = theme.blockColorOptions[props.block.colorIndex];
+  const animatedColor = themeAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [color, color], // Since we don't have prev color, we'll use the same color
+  });
+
+  const animatedBorderColor = themeAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [darkenColor(color, 0.2), darkenColor(color, 0.2)], // Since we don't have prev color, we'll use the same color
+  });
 
   return (
     <>
@@ -122,12 +130,16 @@ export default function Block(props: BlockProps) {
           isMoving && styles.movingBlock,
         ]}
         {...panResponder.panHandlers}>
-        <View
-          width={width}
-          height={blockPixelSize}
-          borderWidth={6}
-          borderColor={darkenColor(color, 0.2)}
-          bgColor={color}
+        <Animated.View
+          style={[
+            styles.block,
+            {
+              width,
+              height: blockPixelSize,
+              borderColor: animatedBorderColor,
+              backgroundColor: animatedColor,
+            },
+          ]}
         />
       </Animated.View>
     </>
@@ -140,5 +152,8 @@ const styles = StyleSheet.create({
   },
   movingBlock: {
     zIndex: 1,
+  },
+  block: {
+    borderWidth: 6,
   },
 });
