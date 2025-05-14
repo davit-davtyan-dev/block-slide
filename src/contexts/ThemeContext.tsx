@@ -1,9 +1,20 @@
-import React, {createContext, useState, useMemo, useContext} from 'react';
+import React, {
+  createContext,
+  useState,
+  useMemo,
+  useContext,
+  useRef,
+  useCallback,
+} from 'react';
 import useColorScheme, {
   ColorScheme,
   EffectiveColorScheme,
 } from '../hooks/useColorScheme';
-import {StatusBar, useColorScheme as useDeviceColorScheme} from 'react-native';
+import {
+  StatusBar,
+  useColorScheme as useDeviceColorScheme,
+  Animated,
+} from 'react-native';
 import {View} from '../components';
 import {HexColor} from '../types';
 
@@ -160,6 +171,10 @@ interface ThemeContextType {
   setColorScheme: (value: ColorScheme) => void;
   colorScheme: ColorScheme;
   effectiveColorScheme: EffectiveColorScheme;
+  themeAnimation: Animated.Value;
+  animatedBackgroundColor: Animated.AnimatedInterpolation<string>;
+  animatedMainColor: Animated.AnimatedInterpolation<string>;
+  animateThemeChange: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -170,6 +185,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
   const [colorScheme, setColorScheme] = useColorScheme();
   const deviceColorScheme = useDeviceColorScheme();
   const [themeName, setThemeName] = useState(defaultTheme);
+  const themeAnimation = useRef(new Animated.Value(1)).current;
 
   const effectiveColorScheme =
     colorScheme === ColorScheme.System
@@ -184,16 +200,69 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
     return themes[themeName][effectiveColorScheme];
   }, [themeName, effectiveColorScheme]);
 
+  const prevTheme = useRef(theme);
+
+  const animatedBackgroundColor = themeAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [prevTheme.current.backgroundColor, theme.backgroundColor],
+  });
+
+  const animatedMainColor = themeAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [prevTheme.current.mainColor, theme.mainColor],
+  });
+
+  const animateThemeChange = useCallback(() => {
+    prevTheme.current = theme;
+    themeAnimation.setValue(0);
+    Animated.timing(themeAnimation, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true, // Required for color animations
+    }).start();
+  }, [themeAnimation, theme]);
+
+  const handleThemeChange = useCallback(
+    (newTheme: React.SetStateAction<ThemeNames>) => {
+      animateThemeChange();
+      setThemeName(newTheme);
+    },
+    [animateThemeChange],
+  );
+
+  const handleColorSchemeChange = useCallback(
+    (newScheme: ColorScheme) => {
+      animateThemeChange();
+      setColorScheme(newScheme);
+    },
+    [animateThemeChange, setColorScheme],
+  );
+
   const value = useMemo<ThemeContextType>(
     () => ({
       themeName,
-      setThemeName,
+      setThemeName: handleThemeChange,
       theme,
-      setColorScheme,
+      setColorScheme: handleColorSchemeChange,
       colorScheme,
       effectiveColorScheme,
+      themeAnimation,
+      animatedBackgroundColor,
+      animatedMainColor,
+      animateThemeChange,
     }),
-    [themeName, theme, setColorScheme, colorScheme, effectiveColorScheme],
+    [
+      themeName,
+      theme,
+      colorScheme,
+      effectiveColorScheme,
+      themeAnimation,
+      animatedBackgroundColor,
+      animatedMainColor,
+      handleThemeChange,
+      handleColorSchemeChange,
+      animateThemeChange,
+    ],
   );
 
   return (

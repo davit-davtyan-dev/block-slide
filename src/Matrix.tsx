@@ -4,6 +4,7 @@ import {View} from './components';
 import {useGameContext} from './contexts/GameContext';
 import MatrixBackground from './MatrixBackground';
 import {useSizes} from './contexts/SizesContext';
+import {useTheme} from './contexts/ThemeContext';
 
 interface MatrixProps {
   children: React.ReactNode;
@@ -12,10 +13,23 @@ interface MatrixProps {
 export default function Matrix(props: MatrixProps) {
   const {matrixWidth, matrixHeight} = useSizes();
   const {shadowPosition, shadowOpacity, shadowSize} = useGameContext();
+  const {themeAnimation} = useTheme();
+
+  const animatedBackgroundColor = themeAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#282a2c', '#282a2c'], // Since we don't have prev color, we'll use the same color
+  });
 
   return (
     <View center>
-      <View width={matrixWidth} height={matrixHeight} bgColor="#282a2c">
+      <Animated.View
+        style={[
+          {
+            width: matrixWidth,
+            height: matrixHeight,
+            backgroundColor: animatedBackgroundColor,
+          },
+        ]}>
         <MatrixBackground />
         {props.children}
         <Animated.View
@@ -27,7 +41,7 @@ export default function Matrix(props: MatrixProps) {
             },
           ]}
         />
-      </View>
+      </Animated.View>
     </View>
   );
 }

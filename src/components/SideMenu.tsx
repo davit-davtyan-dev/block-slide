@@ -83,6 +83,50 @@ function ThemeButton({
   );
 }
 
+function ColorSchemeButton({
+  icon,
+  label,
+  isSelected,
+  onPress,
+}: {
+  scheme: ColorScheme;
+  icon: string;
+  label: string;
+  isSelected: boolean;
+  onPress: () => void;
+}) {
+  const {theme} = useTheme();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: isSelected ? 1.1 : 1,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 7,
+    }).start();
+  }, [isSelected, scaleAnim]);
+
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <Animated.View
+        style={[
+          styles.colorSchemeButton,
+          {transform: [{scale: scaleAnim}]},
+          isSelected && {
+            backgroundColor: addOpacityToHex(theme.mainColor, 0.2),
+            borderColor: theme.mainColor,
+          },
+        ]}>
+        <Icon name={icon} size={24} color={theme.mainColor} />
+        <Text color={theme.mainColor} style={styles.colorSchemeButtonText}>
+          {label}
+        </Text>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
 // Golden ratio
 const SIDE_MENU_WIDTH_PERCENTAGE = 0.618;
 const sideMenuWidth =
@@ -90,12 +134,14 @@ const sideMenuWidth =
 
 export default function SideMenu({isVisible, onClose}: SideMenuProps) {
   const {
-    theme,
     themeName,
     setThemeName,
     colorScheme,
     effectiveColorScheme,
     setColorScheme,
+    animatedBackgroundColor,
+    animatedMainColor,
+    theme,
   } = useTheme();
 
   const translateX = React.useRef(new Animated.Value(-300)).current;
@@ -122,82 +168,60 @@ export default function SideMenu({isVisible, onClose}: SideMenuProps) {
           styles.container,
           {
             transform: [{translateX}],
-            backgroundColor: theme.backgroundColor,
+            backgroundColor: animatedBackgroundColor,
           },
         ]}>
         <View style={styles.header}>
-          <Text fontSize={20} fontWeight="bold" color={theme.mainColor}>
+          <Animated.Text
+            style={[styles.headerText, {color: animatedMainColor}]}>
             Menu
-          </Text>
+          </Animated.Text>
           <TouchableOpacity onPress={onClose}>
-            <Icon name="close" size={24} color={theme.mainColor} />
+            <Animated.Text style={{color: animatedMainColor}}>
+              <Icon name="close" size={24} />
+            </Animated.Text>
           </TouchableOpacity>
         </View>
 
         <Divider />
 
         <View style={styles.section}>
-          <Text fontSize={16} fontWeight="bold" mb={8} color={theme.mainColor}>
+          <Animated.Text
+            style={[styles.sectionTitle, {color: animatedMainColor}]}>
             Color Scheme
-          </Text>
+          </Animated.Text>
           <View style={styles.colorSchemeOptions}>
-            <TouchableOpacity
-              style={[
-                styles.colorSchemeButton,
-                colorScheme === ColorScheme.Light && {
-                  backgroundColor: addOpacityToHex(theme.mainColor, 0.2),
-                  borderColor: theme.mainColor,
-                },
-              ]}
-              onPress={() => setColorScheme(ColorScheme.Light)}>
-              <Icon name="wb-sunny" size={24} color={theme.mainColor} />
-              <Text
-                color={theme.mainColor}
-                style={styles.colorSchemeButtonText}>
-                Light
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.colorSchemeButton,
-                colorScheme === ColorScheme.Dark && {
-                  backgroundColor: addOpacityToHex(theme.mainColor, 0.2),
-                  borderColor: theme.mainColor,
-                },
-              ]}
-              onPress={() => setColorScheme(ColorScheme.Dark)}>
-              <Icon name="nightlight-round" size={24} color={theme.mainColor} />
-              <Text
-                color={theme.mainColor}
-                style={styles.colorSchemeButtonText}>
-                Dark
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.colorSchemeButton,
-                colorScheme === ColorScheme.System && {
-                  backgroundColor: addOpacityToHex(theme.mainColor, 0.2),
-                  borderColor: theme.mainColor,
-                },
-              ]}
-              onPress={() => setColorScheme(ColorScheme.System)}>
-              <Icon name="settings" size={24} color={theme.mainColor} />
-              <Text
-                color={theme.mainColor}
-                style={styles.colorSchemeButtonText}>
-                System
-              </Text>
-            </TouchableOpacity>
+            <ColorSchemeButton
+              scheme={ColorScheme.Light}
+              icon="wb-sunny"
+              label="Light"
+              isSelected={colorScheme === ColorScheme.Light}
+              onPress={() => setColorScheme(ColorScheme.Light)}
+            />
+            <ColorSchemeButton
+              scheme={ColorScheme.Dark}
+              icon="nightlight-round"
+              label="Dark"
+              isSelected={colorScheme === ColorScheme.Dark}
+              onPress={() => setColorScheme(ColorScheme.Dark)}
+            />
+            <ColorSchemeButton
+              scheme={ColorScheme.System}
+              icon="settings"
+              label="System"
+              isSelected={colorScheme === ColorScheme.System}
+              onPress={() => setColorScheme(ColorScheme.System)}
+            />
           </View>
         </View>
 
         <Divider />
 
         <View style={styles.section}>
-          <Text fontSize={16} fontWeight="bold" mb={8} color={theme.mainColor}>
+          <Animated.Text
+            style={[styles.sectionTitle, {color: animatedMainColor}]}>
             Theme Palette
-          </Text>
+          </Animated.Text>
           <View style={styles.options}>
             {Object.entries(themes).map(([name, themeConfig]) => (
               <ThemeButton
@@ -216,17 +240,22 @@ export default function SideMenu({isVisible, onClose}: SideMenuProps) {
         <Divider />
 
         <View style={styles.section}>
-          <Text fontSize={16} fontWeight="bold" mb={8} color={theme.mainColor}>
+          <Animated.Text
+            style={[styles.sectionTitle, {color: animatedMainColor}]}>
             Settings
-          </Text>
+          </Animated.Text>
           <View style={styles.options}>
             <TouchableOpacity
               style={[styles.option, {borderColor: theme.mainColor}]}>
-              <Text color={theme.mainColor}>Sound</Text>
+              <Animated.Text style={{color: animatedMainColor}}>
+                Sound
+              </Animated.Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.option, {borderColor: theme.mainColor}]}>
-              <Text color={theme.mainColor}>Vibration</Text>
+              <Animated.Text style={{color: animatedMainColor}}>
+                Vibration
+              </Animated.Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -327,8 +356,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
     borderColor: 'transparent',
+    backgroundColor: 'transparent',
   },
   colorSchemeButtonText: {
     marginLeft: 8,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
 });
