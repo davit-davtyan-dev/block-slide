@@ -13,12 +13,7 @@ interface MatrixProps {
 export default function Matrix(props: MatrixProps) {
   const {matrixWidth, matrixHeight} = useSizes();
   const {shadowPosition, shadowOpacity, shadowSize} = useGameContext();
-  const {themeAnimation} = useTheme();
-
-  const animatedBackgroundColor = themeAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#282a2c', '#282a2c'], // Since we don't have prev color, we'll use the same color
-  });
+  const {animatedBackgroundColor} = useTheme();
 
   return (
     <View center>
@@ -49,7 +44,9 @@ export default function Matrix(props: MatrixProps) {
 const styles = StyleSheet.create({
   shadow: {
     position: 'absolute',
+    bottom: 0,
     height: '100%',
     backgroundColor: 'white',
+    borderRadius: 2,
   },
 });

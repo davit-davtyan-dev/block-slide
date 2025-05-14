@@ -26,6 +26,8 @@ interface Theme {
   backgroundColor: HexColor;
   /** Ensure this type definition matches the length of BLOCK_COLOR_COUNT */
   blockColorOptions: [HexColor, HexColor, HexColor, HexColor, HexColor];
+  matrixCellBackground: HexColor;
+  matrixCellBorder: HexColor;
 }
 
 type ThemeMap = Record<EffectiveColorScheme, Theme>;
@@ -50,6 +52,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#BAFFC9',
         '#BAE1FF',
       ],
+      matrixCellBackground: '#F0F0F0',
+      matrixCellBorder: '#E0E0E0',
     },
     [EffectiveColorScheme.Dark]: {
       mainColor: '#FF6961',
@@ -61,6 +65,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#77DD77',
         '#AEC6CF',
       ],
+      matrixCellBackground: '#2A2A2A',
+      matrixCellBorder: '#3A3A3A',
     },
   },
   [ThemeNames.HighContrast]: {
@@ -74,6 +80,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#00FF00',
         '#0000FF',
       ],
+      matrixCellBackground: '#E0E0E0',
+      matrixCellBorder: '#000000',
     },
     [EffectiveColorScheme.Dark]: {
       mainColor: '#FFFFFF',
@@ -85,6 +93,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#00FF00',
         '#0000FF',
       ],
+      matrixCellBackground: '#1A1A1A',
+      matrixCellBorder: '#FFFFFF',
     },
   },
   [ThemeNames.Retro]: {
@@ -98,6 +108,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#32CD32',
         '#1E90FF',
       ],
+      matrixCellBackground: '#E8E8D0',
+      matrixCellBorder: '#D4D4B0',
     },
     [EffectiveColorScheme.Dark]: {
       mainColor: '#DAA520',
@@ -109,6 +121,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#32CD32',
         '#1E90FF',
       ],
+      matrixCellBackground: '#1F2F2F',
+      matrixCellBorder: '#3F5F5F',
     },
   },
   [ThemeNames.EightBit]: {
@@ -122,6 +136,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#0000FF',
         '#FF00FF',
       ],
+      matrixCellBackground: '#0000CC',
+      matrixCellBorder: '#0000FF',
     },
     [EffectiveColorScheme.Dark]: {
       mainColor: '#00FF00',
@@ -133,6 +149,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#0000FF',
         '#FF00FF',
       ],
+      matrixCellBackground: '#000000',
+      matrixCellBorder: '#00FF00',
     },
   },
   [ThemeNames.Terminal]: {
@@ -146,6 +164,8 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#0000FF',
         '#FF00FF',
       ],
+      matrixCellBackground: '#000000',
+      matrixCellBorder: '#00FF00',
     },
     [EffectiveColorScheme.Dark]: {
       mainColor: '#00FF00',
@@ -157,12 +177,20 @@ export const themes: Record<ThemeNames, ThemeMap> = {
         '#0000FF',
         '#FF00FF',
       ],
+      matrixCellBackground: '#000000',
+      matrixCellBorder: '#00FF00',
     },
   },
   // Add more themes...
 };
 
 const defaultTheme = ThemeNames.Pastel;
+
+type AnimatedColorKey =
+  | 'backgroundColor'
+  | 'mainColor'
+  | 'matrixCellBackground'
+  | 'matrixCellBorder';
 
 interface ThemeContextType {
   themeName: ThemeNames;
@@ -174,6 +202,8 @@ interface ThemeContextType {
   themeAnimation: Animated.Value;
   animatedBackgroundColor: Animated.AnimatedInterpolation<string>;
   animatedMainColor: Animated.AnimatedInterpolation<string>;
+  animatedMatrixCellBackground: Animated.AnimatedInterpolation<string>;
+  animatedMatrixCellBorder: Animated.AnimatedInterpolation<string>;
   animateThemeChange: () => void;
 }
 
@@ -186,6 +216,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
   const deviceColorScheme = useDeviceColorScheme();
   const [themeName, setThemeName] = useState(defaultTheme);
   const themeAnimation = useRef(new Animated.Value(1)).current;
+  const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
 
   const effectiveColorScheme =
     colorScheme === ColorScheme.System
@@ -202,24 +233,31 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
 
   const prevTheme = useRef(theme);
 
-  const animatedBackgroundColor = themeAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [prevTheme.current.backgroundColor, theme.backgroundColor],
-  });
-
-  const animatedMainColor = themeAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [prevTheme.current.mainColor, theme.mainColor],
-  });
+  // Generic function to create animated color interpolation
+  const createAnimatedColor = useCallback(
+    (colorKey: AnimatedColorKey) => {
+      return themeAnimation.interpolate({
+        inputRange: [currentThemeIndex - 1, currentThemeIndex],
+        outputRange: [prevTheme.current[colorKey], theme[colorKey]],
+      });
+    },
+    [themeAnimation, theme, currentThemeIndex],
+  );
 
   const animateThemeChange = useCallback(() => {
     prevTheme.current = theme;
-    themeAnimation.setValue(0);
-    Animated.timing(themeAnimation, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true, // Required for color animations
-    }).start();
+    setCurrentThemeIndex(oldValue => {
+      const newValue = oldValue + 1;
+
+      Animated.timing(themeAnimation, {
+        toValue: newValue,
+        duration: 300,
+        delay: 10,
+        useNativeDriver: true, // Required for color animations
+      }).start();
+
+      return newValue;
+    });
   }, [themeAnimation, theme]);
 
   const handleThemeChange = useCallback(
@@ -247,8 +285,10 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
       colorScheme,
       effectiveColorScheme,
       themeAnimation,
-      animatedBackgroundColor,
-      animatedMainColor,
+      animatedBackgroundColor: createAnimatedColor('backgroundColor'),
+      animatedMainColor: createAnimatedColor('mainColor'),
+      animatedMatrixCellBackground: createAnimatedColor('matrixCellBackground'),
+      animatedMatrixCellBorder: createAnimatedColor('matrixCellBorder'),
       animateThemeChange,
     }),
     [
@@ -257,8 +297,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
       colorScheme,
       effectiveColorScheme,
       themeAnimation,
-      animatedBackgroundColor,
-      animatedMainColor,
+      createAnimatedColor,
       handleThemeChange,
       handleColorSchemeChange,
       animateThemeChange,

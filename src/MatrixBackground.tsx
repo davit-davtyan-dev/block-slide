@@ -6,17 +6,7 @@ import {useTheme} from './contexts/ThemeContext';
 
 export default function MatrixBackground() {
   const {martixColumns, martixRows, blockPixelSize} = useSizes();
-  const {themeAnimation} = useTheme();
-
-  const animatedCellBackgroundColor = themeAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#1b1c1d', '#1b1c1d'], // Since we don't have prev color, we'll use the same color
-  });
-
-  const animatedCellBorderColor = themeAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#282a2c', '#282a2c'], // Since we don't have prev color, we'll use the same color
-  });
+  const {animatedMatrixCellBackground, animatedMatrixCellBorder} = useTheme();
 
   return (
     <View position="absolute">
@@ -35,8 +25,8 @@ export default function MatrixBackground() {
                       left: blockPixelSize * cIndex,
                       width: blockPixelSize,
                       height: blockPixelSize,
-                      backgroundColor: animatedCellBackgroundColor,
-                      borderColor: animatedCellBorderColor,
+                      backgroundColor: animatedMatrixCellBackground,
+                      borderColor: animatedMatrixCellBorder,
                     },
                   ]}
                 />
