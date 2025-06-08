@@ -1,0 +1,149 @@
+---
+description:
+globs: *.tsx
+alwaysApply: false
+---
+# React Basic Rules
+
+## Hooks Usage
+- Always import hooks directly from 'react' instead of using React.hookName
+- ❌ Bad:
+```tsx
+import React from 'react';
+
+function Component() {
+  const [state, setState] = React.useState(initialState);
+  const [count, setCount] = React.useState(0);
+  const ref = React.useRef(null);
+  const memoizedValue = React.useMemo(() => computeExpensiveValue(a, b), [a, b]);
+  const memoizedCallback = React.useCallback(() => {
+    doSomething(a, b);
+  }, [a, b]);
+  React.useEffect(() => {
+    // effect
+  }, []);
+  React.useLayoutEffect(() => {
+    // layout effect
+  }, []);
+  React.useReducer(reducer, initialState);
+  React.useContext(MyContext);
+}
+```
+- ✅ Good:
+```tsx
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  useLayoutEffect,
+  useReducer,
+  useContext
+} from 'react';
+
+function Component() {
+  const [state, setState] = useState(initialState);
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);
+  const memoizedCallback = useCallback(() => {
+    doSomething(a, b);
+  }, [a, b]);
+  useEffect(() => {
+    // effect
+  }, []);
+  useLayoutEffect(() => {
+    // layout effect
+  }, []);
+  useReducer(reducer, initialState);
+  useContext(MyContext);
+}
+```
+
+## Component Naming
+- Use PascalCase for component names
+- Suffix with meaningful names that describe the component's purpose
+- ❌ Bad:
+```tsx
+function button() { ... }
+function myComponent() { ... }
+function div() { ... }
+```
+- ✅ Good:
+```tsx
+function Button() { ... }
+function UserProfile() { ... }
+function NavigationMenu() { ... }
+```
+
+## Props Interface
+- Define prop types using TypeScript interfaces
+- Use meaningful names for props
+- Document complex props with JSDoc comments
+- ❌ Bad:
+```tsx
+interface Props {
+  a: string;
+  b: number;
+  c: boolean;
+}
+
+function Component({ a, b, c }: Props) { ... }
+```
+- ✅ Good:
+```tsx
+interface ButtonProps {
+  /** The text to display inside the button */
+  label: string;
+  /** The type of button (primary, secondary, etc.) */
+  variant: 'primary' | 'secondary' | 'danger';
+  /** Whether the button is disabled */
+  isDisabled?: boolean;
+  /** Callback function when button is clicked */
+  onClick: () => void;
+}
+
+function Button({ label, variant, isDisabled, onClick }: ButtonProps) { ... }
+```
+
+## Component Structure
+- One component per file
+- Keep components small and focused
+- Extract reusable logic into custom hooks
+- ❌ Bad:
+```tsx
+// BigComponent.tsx
+function BigComponent() {
+  // 500 lines of code
+  // Mixing UI, business logic, and data fetching
+  // Multiple responsibilities
+}
+```
+- ✅ Good:
+```tsx
+// UserProfile.tsx
+function UserProfile() {
+  const { user, isLoading } = useUser();
+  const { handleUpdate } = useUserActions();
+
+  if (isLoading) return <LoadingSpinner />;
+
+  return (
+    <div>
+      <UserHeader user={user} />
+      <UserDetails user={user} onUpdate={handleUpdate} />
+    </div>
+  );
+}
+
+// useUser.ts
+function useUser() {
+  // User fetching logic
+}
+
+// useUserActions.ts
+function useUserActions() {
+  // User action handlers
+}
+```

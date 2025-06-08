@@ -1,0 +1,274 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# React Native Accessibility Rules
+
+## Basic Accessibility
+- Use proper accessibility props (accessibilityLabel, accessibilityHint, accessibilityRole)
+- Implement proper accessibility states
+- Ensure proper touch targets (minimum 44x44 points)
+- ❌ Bad:
+```tsx
+function Component() {
+  return (
+    <View onPress={handlePress}>
+      <Text>Press me</Text>
+    </View>
+  );
+}
+```
+- ✅ Good:
+```tsx
+function Component() {
+  return (
+    <Pressable
+      onPress={handlePress}
+      accessibilityLabel="Submit form"
+      accessibilityRole="button"
+      accessibilityHint="Double tap to submit the form"
+      style={({ pressed }) => [
+        styles.button,
+        pressed && styles.buttonPressed
+      ]}
+    >
+      <Text>Submit</Text>
+    </Pressable>
+  );
+}
+```
+
+## Advanced Accessibility
+- ❌ Bad:
+```tsx
+function Modal() {
+  return (
+    <View>
+      <Text>Modal Title</Text>
+      <Text>Content</Text>
+      <Pressable onPress={onClose}>
+        <Text>Close</Text>
+      </Pressable>
+    </View>
+  );
+}
+```
+- ✅ Good:
+```tsx
+function Modal() {
+  return (
+    <View
+      accessibilityViewIsModal={true}
+      accessibilityLabel="Modal dialog"
+    >
+      <Text
+        accessibilityRole="header"
+        accessibilityLabel="Modal Title"
+      >
+        Modal Title
+      </Text>
+      <Text>Content</Text>
+      <Pressable
+        onPress={onClose}
+        accessibilityLabel="Close modal"
+        accessibilityRole="button"
+        accessibilityHint="Double tap to close the modal"
+      >
+        <Text>Close</Text>
+      </Pressable>
+    </View>
+  );
+}
+```
+
+## Form Accessibility
+- ❌ Bad:
+```tsx
+function Form() {
+  return (
+    <View>
+      <Text>Name:</Text>
+      <TextInput />
+      <Text>Email:</Text>
+      <TextInput />
+      <Pressable>
+        <Text>Submit</Text>
+      </Pressable>
+    </View>
+  );
+}
+```
+- ✅ Good:
+```tsx
+function Form() {
+  return (
+    <View>
+      <View>
+        <Text
+          accessibilityRole="header"
+          accessibilityLabel="Name input field"
+        >
+          Name:
+        </Text>
+        <TextInput
+          accessibilityLabel="Name"
+          accessibilityRequired={true}
+          accessibilityInvalid={!!errors.name}
+          accessibilityHint="Enter your full name"
+          placeholder="Enter your name"
+        />
+        {errors.name && (
+          <Text
+            accessibilityRole="alert"
+            accessibilityLabel="Name error"
+          >
+            {errors.name}
+          </Text>
+        )}
+      </View>
+      <View>
+        <Text
+          accessibilityRole="header"
+          accessibilityLabel="Email input field"
+        >
+          Email:
+        </Text>
+        <TextInput
+          accessibilityLabel="Email"
+          accessibilityRequired={true}
+          accessibilityInvalid={!!errors.email}
+          accessibilityHint="Enter your email address"
+          placeholder="Enter your email"
+          keyboardType="email-address"
+        />
+        {errors.email && (
+          <Text
+            accessibilityRole="alert"
+            accessibilityLabel="Email error"
+          >
+            {errors.email}
+          </Text>
+        )}
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Submit form"
+        accessibilityHint="Double tap to submit the form"
+      >
+        <Text>Submit</Text>
+      </Pressable>
+    </View>
+  );
+}
+```
+
+## List Accessibility
+- ❌ Bad:
+```tsx
+function List() {
+  return (
+    <ScrollView>
+      {items.map(item => (
+        <Pressable key={item.id}>
+          <Text>{item.title}</Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
+}
+```
+- ✅ Good:
+```tsx
+function List() {
+  return (
+    <ScrollView
+      accessibilityRole="list"
+      accessibilityLabel="List of items"
+    >
+      {items.map((item, index) => (
+        <Pressable
+          key={item.id}
+          accessibilityRole="listitem"
+          accessibilityLabel={item.title}
+          accessibilityHint={`Item ${index + 1} of ${items.length}`}
+          accessibilityActions={[
+            { name: 'activate', label: 'Select item' }
+          ]}
+          onAccessibilityAction={({ nativeEvent: { actionName } }) => {
+            if (actionName === 'activate') {
+              handleItemPress(item);
+            }
+          }}
+        >
+          <Text>{item.title}</Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
+}
+```
+
+## Image Accessibility
+- ❌ Bad:
+```tsx
+function ImageComponent() {
+  return (
+    <Image source={require('./image.png')} />
+  );
+}
+```
+- ✅ Good:
+```tsx
+function ImageComponent() {
+  return (
+    <Image
+      source={require('./image.png')}
+      accessibilityLabel="Description of the image"
+      accessibilityRole="image"
+      accessibilityHint="Double tap to view full size"
+    />
+  );
+}
+```
+
+## Dynamic Content Updates
+- ❌ Bad:
+```tsx
+function DynamicContent() {
+  const [count, setCount] = useState(0);
+  return (
+    <View>
+      <Text>Count: {count}</Text>
+      <Pressable onPress={() => setCount(count + 1)}>
+        <Text>Increment</Text>
+      </Pressable>
+    </View>
+  );
+}
+```
+- ✅ Good:
+```tsx
+function DynamicContent() {
+  const [count, setCount] = useState(0);
+  return (
+    <View>
+      <Text
+        accessibilityRole="text"
+        accessibilityLabel={`Current count is ${count}`}
+        accessibilityLiveRegion="polite"
+      >
+        Count: {count}
+      </Text>
+      <Pressable
+        onPress={() => setCount(count + 1)}
+        accessibilityRole="button"
+        accessibilityLabel="Increment count"
+        accessibilityHint="Double tap to increase the count by one"
+      >
+        <Text>Increment</Text>
+      </Pressable>
+    </View>
+  );
+}
+```

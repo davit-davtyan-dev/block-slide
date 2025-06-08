@@ -1,0 +1,138 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# React State Management Rules
+
+## Local State
+- Keep state as local as possible
+- Use context for global state
+- Consider using state management libraries for complex applications
+- ❌ Bad:
+```tsx
+// Global state for everything
+const GlobalState = createContext({
+  user: null,
+  theme: 'light',
+  todos: [],
+  settings: {},
+  notifications: []
+});
+
+function Component() {
+  const { user, theme, todos, settings, notifications } = useContext(GlobalState);
+  // Component only needs user and theme, but gets everything
+}
+```
+- ✅ Good:
+```tsx
+// Split into focused contexts
+const UserContext = createContext<User | null>(null);
+const ThemeContext = createContext<'light' | 'dark'>('light');
+
+function Component() {
+  const user = useContext(UserContext);
+  const theme = useContext(ThemeContext);
+  // Component only gets what it needs
+}
+```
+
+## Custom Hooks
+- ❌ Bad:
+```tsx
+function Component() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData()
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Duplicated in multiple components
+}
+```
+- ✅ Good:
+```tsx
+function useData<T>(url: string) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(url)
+      .then(res => res.json())
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+function Component() {
+  const { data, loading, error } = useData<User>('/api/user');
+  // Reusable across components
+}
+```
+
+## Redux State Management
+- ❌ Bad:
+```tsx
+// Everything in one file
+const store = {
+  state: {
+    user: null,
+    todos: [],
+    settings: {}
+  },
+  actions: {
+    setUser: (user) => {},
+    addTodo: (todo) => {},
+    updateSettings: (settings) => {}
+  }
+};
+```
+- ✅ Good:
+```tsx
+// userSlice.ts
+interface UserState {
+  data: User | null;
+  loading: boolean;
+  error: string | null;
+}
+
+const userSlice = createSlice({
+  name: 'user',
+  initialState: {
+    data: null,
+    loading: false,
+    error: null
+  },
+  reducers: {
+    setUser: (state, action) => {
+      state.data = action.payload;
+    },
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action) => {
+      state.error = action.payload;
+    }
+  }
+});
+
+// store.ts
+const store = configureStore({
+  reducer: {
+    user: userSlice.reducer,
+    // Other slices...
+  }
+});
+```

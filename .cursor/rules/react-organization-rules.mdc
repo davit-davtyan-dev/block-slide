@@ -1,0 +1,180 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# React Code Organization Rules
+
+## Project Structure
+- Group related components
+- Separate business logic from UI
+- Use proper folder structure
+- ❌ Bad:
+```
+src/
+  Component1.tsx
+  Component2.tsx
+  utils.ts
+  hooks.ts
+  styles.css
+```
+- ✅ Good:
+```
+src/
+  components/
+    Button/
+      Button.tsx
+      Button.test.tsx
+      Button.module.css
+    UserProfile/
+      UserProfile.tsx
+      UserProfile.test.tsx
+      UserProfile.module.css
+  hooks/
+    useUser.ts
+    useAuth.ts
+  utils/
+    formatters.ts
+    validators.ts
+  types/
+    user.ts
+    api.ts
+  styles/
+    theme.ts
+    global.css
+```
+
+## File Naming
+- ❌ Bad:
+```
+src/
+  component.tsx
+  myComponent.tsx
+  utils.ts
+  helper.ts
+```
+- ✅ Good:
+```
+src/
+  components/
+    Button.tsx
+    UserProfile.tsx
+  utils/
+    dateFormatter.ts
+    stringHelper.ts
+```
+
+## Code Splitting
+- ❌ Bad:
+```tsx
+import HeavyComponent from './HeavyComponent';
+import AnotherHeavyComponent from './AnotherHeavyComponent';
+
+function App() {
+  return (
+    <div>
+      <HeavyComponent />
+      <AnotherHeavyComponent />
+    </div>
+  );
+}
+```
+- ✅ Good:
+```tsx
+import { lazy, Suspense } from 'react';
+
+const HeavyComponent = lazy(() => import('./HeavyComponent'));
+const AnotherHeavyComponent = lazy(() => import('./AnotherHeavyComponent'));
+
+function App() {
+  return (
+    <div>
+      <Suspense fallback={<LoadingSpinner />}>
+        <HeavyComponent />
+      </Suspense>
+      <Suspense fallback={<LoadingSpinner />}>
+        <AnotherHeavyComponent />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+## Module Organization
+- ❌ Bad:
+```tsx
+// api.ts
+export const fetchUser = () => {};
+export const updateUser = () => {};
+export const deleteUser = () => {};
+export const fetchPosts = () => {};
+export const updatePost = () => {};
+export const deletePost = () => {};
+```
+- ✅ Good:
+```tsx
+// api/user.ts
+export const fetchUser = () => {};
+export const updateUser = () => {};
+export const deleteUser = () => {};
+
+// api/post.ts
+export const fetchPosts = () => {};
+export const updatePost = () => {};
+export const deletePost = () => {};
+
+// api/index.ts
+export * from './user';
+export * from './post';
+```
+
+## Type Organization
+- ❌ Bad:
+```tsx
+// types.ts
+interface User {
+  id: string;
+  name: string;
+}
+
+interface Post {
+  id: string;
+  title: string;
+}
+
+interface Comment {
+  id: string;
+  text: string;
+}
+```
+- ✅ Good:
+```tsx
+// types/user.ts
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
+
+// types/post.ts
+export interface Post {
+  id: string;
+  title: string;
+  content: string;
+  author: User;
+}
+
+// types/comment.ts
+export interface Comment {
+  id: string;
+  text: string;
+  author: User;
+  post: Post;
+}
+
+// types/index.ts
+export * from './user';
+export * from './post';
+export * from './comment';
+```
