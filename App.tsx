@@ -11,16 +11,19 @@ import {ThemeProvider} from './src/contexts/ThemeContext';
 import {SizesProvider} from './src/contexts/SizesContext';
 import {GameContextProvider} from './src/contexts/GameContext';
 import GameScreen from './src/GameScreen';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 function App(): React.JSX.Element {
   return (
-    <ThemeProvider>
-      <SizesProvider>
-        <GameContextProvider>
-          <GameScreen />
-        </GameContextProvider>
-      </SizesProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <SizesProvider>
+          <GameContextProvider>
+            <GameScreen />
+          </GameContextProvider>
+        </SizesProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

@@ -6,6 +6,7 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import useColorScheme, {
   ColorScheme,
   EffectiveColorScheme,
@@ -217,6 +218,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
   const [themeName, setThemeName] = useState(defaultTheme);
   const themeAnimation = useRef(new Animated.Value(1)).current;
   const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
+  const safeAreaInsets = useSafeAreaInsets();
 
   const effectiveColorScheme =
     colorScheme === ColorScheme.System
@@ -313,7 +315,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
             : 'dark-content'
         }
       />
-      <View height={StatusBar.currentHeight} bgColor={theme.backgroundColor} />
+      <View height={safeAreaInsets.top} bgColor={theme.backgroundColor} />
       {children}
     </ThemeContext.Provider>
   );

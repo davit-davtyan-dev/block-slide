@@ -43,12 +43,8 @@ export default function GameScreen() {
   return (
     <View center h="100%" bgColor={theme.backgroundColor}>
       <View position="absolute" top={8} left={8}>
-        <TouchableOpacity
-          onPress={() => setIsMenuVisible(true)}
-          p={8}
-          borderRadius={8}
-          bgColor={theme.mainColor}>
-          <Icon name="menu" size={24} color="white" />
+        <TouchableOpacity p={4} onPress={() => setIsMenuVisible(true)}>
+          <Icon name="menu" size={24} color={theme.mainColor} />
         </TouchableOpacity>
       </View>
 
@@ -59,8 +55,8 @@ export default function GameScreen() {
         onPress={restart}
         borderWidth={1}
         borderRadius={8}
-        borderColor="white">
-        <Text color="white">Restart</Text>
+        borderColor={theme.mainColor}>
+        <Text color={theme.mainColor}>Restart</Text>
       </TouchableOpacity>
 
       <Matrix>
