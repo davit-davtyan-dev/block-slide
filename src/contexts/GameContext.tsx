@@ -2,14 +2,18 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import {Animated} from 'react-native';
+import {TaskQueue, TaskType} from '../TaskQueue';
 import {useSizes} from './SizesContext';
 import useGenerateRow from '../hooks/useGenerateRow';
-import useUpdateBlockPositionsWithGravity from '../hooks/useUpdateBlockPositionsWithGravity';
+import {doBlocksOverlap, getRowsCount} from '../helpers';
+import {ANIMATION_DEFAULT_DURATION, MIN_VISIBLE_ROW_COUNT} from '../constants';
+
 import type {Block, BlockColumns} from '../types';
 
 type ShadowState = {
@@ -28,47 +32,187 @@ type GameContextState = {
     callback: (oldShadowState: ShadowState) => ShadowState | undefined,
   ) => void;
   moveBlock: (blockId: string, newColumnIndex: BlockColumns) => void;
+  hasQueuedTask: boolean;
 };
 
 const GameContext = createContext<GameContextState | undefined>(undefined);
 
 type GameContextProviderProps = {children: React.ReactNode};
 
-function removeCompletedRows(blocks: Array<Block>, martixColumns: number) {
-  const rowColumnsByRowIndex = blocks.reduce((acc, block) => {
-    acc[block.rowIndex] = (acc[block.rowIndex] ?? 0) + block.columns;
-    return acc;
-  }, {} as {[rowIndex: string]: number});
-
-  const completedRows = Object.keys(rowColumnsByRowIndex)
-    .filter(rowIndex => rowColumnsByRowIndex[rowIndex] === martixColumns)
-    .map(Number);
-
-  return blocks.filter(block => !completedRows.includes(block.rowIndex));
-}
-
 export const GameContextProvider = (props: GameContextProviderProps) => {
-  const {blockPixelSize, martixColumns} = useSizes();
+  const {blockPixelSize, martixColumns, martixRows} = useSizes();
   const generateRow = useGenerateRow();
-  const [blocks, setBlocks] = useState(() => [
-    ...generateRow(0),
-    ...generateRow(1),
-    ...generateRow(2),
-    ...generateRow(3),
-  ]);
-  const updateBlockPositionsWithGravity = useUpdateBlockPositionsWithGravity(
-    useCallback(() => {
-      setBlocks(oldBlocks => {
-        const newBlocks = removeCompletedRows(oldBlocks, martixColumns);
-        if (newBlocks.length === oldBlocks.length) {
-          return [...newBlocks, ...generateRow(0)];
-        } else {
-          updateBlockPositionsWithGravity(newBlocks);
-          return newBlocks;
-        }
-      });
-    }, [martixColumns, generateRow]),
+  const generateInitialRows = useCallback(
+    () =>
+      Array(MIN_VISIBLE_ROW_COUNT + 1)
+        .fill(null)
+        .map((_, index) => generateRow(index))
+        .flat(),
+    [generateRow],
   );
+  const [blocks, setBlocks] = useState(generateInitialRows);
+  const [hasQueuedTask, setHasQueuedTask] = useState(false);
+
+  const addNewRowRef = useRef<() => void>(() => {});
+  const applyGravityRef = useRef<(oldBlocks: Array<Block>) => void>(() => {});
+  const removeCompletedRowsRef = useRef<(oldBlocks: Array<Block>) => void>(
+    () => {},
+  );
+
+  useEffect(() => {
+    TaskQueue.registerOnFilled(() => {
+      setHasQueuedTask(true);
+    });
+    TaskQueue.registerOnDrained(() => {
+      setHasQueuedTask(false);
+    });
+  }, []);
+
+  const applyGravity = useCallback(
+    (oldBlocks: Array<Block>) => {
+      const orderedBlocks = oldBlocks
+        .map(block => ({...block}))
+        .sort((a, b) => (a.rowIndex < b.rowIndex ? -1 : 1));
+      const reversedOrderedBlocks = [...orderedBlocks].reverse();
+
+      const newBlocks: Array<Block> = [];
+      const animations: Array<Animated.CompositeAnimation> = [];
+
+      for (const block of orderedBlocks) {
+        if (block.rowIndex <= 1) {
+          newBlocks.push(block);
+          continue;
+        }
+        const nearestBlocksBelow = reversedOrderedBlocks.filter(
+          blockBelow =>
+            blockBelow.rowIndex !== 0 &&
+            blockBelow.rowIndex < block.rowIndex &&
+            doBlocksOverlap(block, blockBelow),
+        );
+        const oldRowIndex = block.rowIndex;
+        if (!nearestBlocksBelow.length) {
+          block.rowIndex = 1;
+        } else {
+          const nearestBlockBelowIndex = Math.max(
+            ...nearestBlocksBelow.map(item => item.rowIndex),
+          );
+          block.rowIndex = nearestBlockBelowIndex + 1;
+        }
+        block.y = blockPixelSize * (martixRows - block.rowIndex);
+        if (oldRowIndex !== block.rowIndex) {
+          animations.push(
+            Animated.timing(block.pan.y, {
+              toValue: block.y,
+              duration: ANIMATION_DEFAULT_DURATION,
+              useNativeDriver: true,
+            }),
+          );
+        }
+        newBlocks.push(block);
+      }
+
+      if (animations.length) {
+        TaskQueue.enqueue({
+          type: TaskType.RemoveCompletedRows,
+          handler: () => removeCompletedRowsRef.current(newBlocks),
+        });
+        Animated.parallel(animations).start(() => {
+          TaskQueue.runNext();
+        });
+      } else {
+        TaskQueue.runNext();
+      }
+
+      setBlocks(newBlocks);
+    },
+    [blockPixelSize, martixRows],
+  );
+
+  const addNewRow = useCallback(() => {
+    const newRowBlocks = generateRow(0);
+
+    setBlocks(oldBlocks => {
+      const newBlocks: Array<Block> = [];
+      const animations: Array<Animated.CompositeAnimation> = [];
+
+      for (const block of oldBlocks) {
+        const newBlock = {...block};
+        newBlock.rowIndex += 1;
+        newBlock.y = blockPixelSize * (martixRows - newBlock.rowIndex);
+
+        newBlocks.push(newBlock);
+        animations.push(
+          Animated.timing(newBlock.pan.y, {
+            toValue: newBlock.y,
+            duration: ANIMATION_DEFAULT_DURATION,
+            useNativeDriver: true,
+          }),
+        );
+      }
+
+      newBlocks.push(...newRowBlocks);
+
+      TaskQueue.enqueue({
+        type: TaskType.ApplyGravity,
+        handler: () => applyGravityRef.current(newBlocks),
+      });
+      for (let i = getRowsCount(newBlocks); i <= MIN_VISIBLE_ROW_COUNT; i++) {
+        TaskQueue.enqueueLowPriorityTask({
+          type: TaskType.AddNewRow,
+          handler: addNewRowRef.current,
+        });
+      }
+      Animated.parallel(animations).start(() => {
+        TaskQueue.runNext();
+      });
+
+      return newBlocks;
+    });
+  }, [blockPixelSize, generateRow, martixRows]);
+
+  const removeCompletedRows = useCallback(
+    (oldBlocks: Array<Block>) => {
+      const rowColumnsByRowIndex = oldBlocks.reduce((acc, block) => {
+        acc[block.rowIndex] = (acc[block.rowIndex] ?? 0) + block.columns;
+        return acc;
+      }, {} as {[rowIndex: string]: number});
+
+      const completedRows = Object.keys(rowColumnsByRowIndex)
+        .filter(rowIndex => rowColumnsByRowIndex[rowIndex] === martixColumns)
+        .map(Number);
+
+      const newBlocks: Array<Block> = [];
+
+      for (const block of oldBlocks) {
+        if (!completedRows.includes(block.rowIndex)) {
+          newBlocks.push(block);
+          continue;
+        }
+      }
+
+      if (newBlocks.length !== oldBlocks.length) {
+        TaskQueue.enqueue({
+          type: TaskType.ApplyGravity,
+          handler: () => applyGravityRef.current(newBlocks),
+        });
+      }
+      if (!TaskQueue.hasTaskOfType(TaskType.AddNewRow)) {
+        for (let i = getRowsCount(newBlocks); i <= MIN_VISIBLE_ROW_COUNT; i++) {
+          TaskQueue.enqueueLowPriorityTask({
+            type: TaskType.AddNewRow,
+            handler: addNewRowRef.current,
+          });
+        }
+      }
+      TaskQueue.runNext();
+      setBlocks(newBlocks);
+    },
+    [martixColumns],
+  );
+
+  addNewRowRef.current = addNewRow;
+  applyGravityRef.current = applyGravity;
+  removeCompletedRowsRef.current = removeCompletedRows;
 
   const shadowPositionRef = useRef(new Animated.Value(0));
   const shadowOpacityRef = useRef(new Animated.Value(0));
@@ -80,13 +224,10 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
   });
 
   const restart = useCallback(() => {
-    setBlocks([
-      ...generateRow(0),
-      ...generateRow(1),
-      ...generateRow(2),
-      ...generateRow(3),
-    ]);
-  }, [generateRow]);
+    const newBlocks = generateInitialRows();
+
+    setBlocks(newBlocks);
+  }, [generateInitialRows]);
 
   const setShadowState = useCallback<GameContextState['setShadowState']>(
     callback => {
@@ -122,19 +263,26 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
 
   const moveBlock = useCallback<GameContextState['moveBlock']>(
     (blockId, newColumnIndex) => {
-      setBlocks(oldBlocks => {
-        const newBlocks = updateBlockPositionsWithGravity(
-          oldBlocks.map(block => {
-            if (block.id === blockId) {
-              return {...block, columnIndex: newColumnIndex};
-            }
-            return block;
-          }),
-        );
-        return newBlocks;
+      TaskQueue.enqueue({
+        type: TaskType.ApplyGravity,
+        handler: () =>
+          applyGravityRef.current(
+            blocks.map(block => {
+              const newBlock = {...block};
+              if (block.id === blockId) {
+                newBlock.columnIndex = newColumnIndex;
+              }
+              return newBlock;
+            }),
+          ),
       });
+      TaskQueue.enqueueLowPriorityTask({
+        type: TaskType.AddNewRow,
+        handler: addNewRowRef.current,
+      });
+      TaskQueue.runNext();
     },
-    [updateBlockPositionsWithGravity],
+    [blocks],
   );
 
   const value = useMemo<GameContextState>(
@@ -146,6 +294,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
       shadowSize: shadowSizeRef.current,
       setShadowState,
       moveBlock,
+      hasQueuedTask,
     }),
     [
       blocks,
@@ -155,6 +304,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
       shadowSizeRef,
       setShadowState,
       moveBlock,
+      hasQueuedTask,
     ],
   );
 

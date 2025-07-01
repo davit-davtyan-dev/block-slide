@@ -57,6 +57,12 @@ export function doBlocksOverlap(blockA: Block, blockB: Block) {
   return Math.max(blockAStart, blockBStart) < Math.min(blockAEnd, blockBEnd);
 }
 
+export function getRowsCount(newBlocks: Array<Block>) {
+  const uniqueRowIndices = new Set(newBlocks.map(block => block.rowIndex));
+
+  return uniqueRowIndices.size;
+}
+
 /**
  * Adds opacity to a hex color
  * @param hexColor The hex color to add opacity to

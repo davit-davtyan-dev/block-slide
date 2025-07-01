@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useState, useEffect} from 'react';
 import {Animated, PanResponder, StyleSheet} from 'react-native';
 import {useGameContext} from './contexts/GameContext';
 import {useSizes} from './contexts/SizesContext';
@@ -20,7 +20,7 @@ function roundToNearestMultiple(num: number, multiple: number) {
 export default function Block(props: BlockProps) {
   const {blockPixelSize, martixColumns} = useSizes();
   const {theme, themeAnimation} = useTheme();
-  const {setShadowState, moveBlock} = useGameContext();
+  const {setShadowState, moveBlock, hasQueuedTask} = useGameContext();
 
   const width = props.block.columns * blockPixelSize;
   const min = (props.leftLimit || 0) * blockPixelSize;
@@ -32,11 +32,21 @@ export default function Block(props: BlockProps) {
   const [latestPosition, setLatestPosition] = useState(x);
   const [isMoving, setIsMoving] = useState(false);
 
+  useEffect(() => {
+    const listener = pan.x.addListener(({value}) => {
+      setLatestPosition(value);
+    });
+
+    return () => {
+      pan.x.removeListener(listener);
+    };
+  }, [pan.x]);
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: () => {
-          return true;
+          return !hasQueuedTask;
         },
         onPanResponderMove: (_e, gestureState) => {
           function setPanValue(value: number) {
@@ -105,6 +115,7 @@ export default function Block(props: BlockProps) {
       setShadowState,
       x,
       y,
+      hasQueuedTask,
     ],
   );
 

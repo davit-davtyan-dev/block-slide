@@ -1,0 +1,2 @@
+export const ANIMATION_DEFAULT_DURATION = 150;
+export const MIN_VISIBLE_ROW_COUNT = 3;
