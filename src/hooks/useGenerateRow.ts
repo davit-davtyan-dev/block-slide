@@ -44,6 +44,7 @@ export default function useGenerateRow() {
           x: 0,
           y: 0,
           pan: new Animated.ValueXY({x: 0, y: 0}),
+          scale: new Animated.Value(1),
           ...(__DEV__ && {
             debug: {
               initialRowIndex: rowIndex,

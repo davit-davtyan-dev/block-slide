@@ -182,18 +182,30 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
         .map(Number);
 
       const newBlocks: Array<Block> = [];
+      const animations: Array<Animated.CompositeAnimation> = [];
 
       for (const block of oldBlocks) {
         if (!completedRows.includes(block.rowIndex)) {
           newBlocks.push(block);
-          continue;
+        } else {
+          animations.push(
+            Animated.timing(block.scale, {
+              toValue: 0,
+              duration: ANIMATION_DEFAULT_DURATION,
+              useNativeDriver: true,
+            }),
+          );
         }
       }
 
-      if (newBlocks.length !== oldBlocks.length) {
+      if (animations.length) {
         TaskQueue.enqueue({
           type: TaskType.ApplyGravity,
           handler: () => applyGravityRef.current(newBlocks),
+        });
+        Animated.parallel(animations).start(() => {
+          setBlocks(newBlocks);
+          TaskQueue.runNext();
         });
       }
       if (!TaskQueue.hasTaskOfType(TaskType.AddNewRow)) {
@@ -204,8 +216,9 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
           });
         }
       }
-      TaskQueue.runNext();
-      setBlocks(newBlocks);
+      if (!animations.length) {
+        TaskQueue.runNext();
+      }
     },
     [martixColumns],
   );

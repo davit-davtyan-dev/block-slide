@@ -20,5 +20,6 @@ export type Block = {
   x: number;
   y: number;
   pan: Animated.ValueXY;
+  scale: Animated.Value;
   debug?: BlockDebug;
 };

@@ -26,6 +26,7 @@ export default function Block(props: BlockProps) {
   const min = (props.leftLimit || 0) * blockPixelSize;
   const max = (props.rightLimit || martixColumns) * blockPixelSize - width;
   const pan = props.block.pan;
+  const scale = props.block.scale;
   const x = props.block.x;
   const y = props.block.y;
 
@@ -135,7 +136,11 @@ export default function Block(props: BlockProps) {
       <Animated.View
         style={[
           {
-            transform: [{translateX: pan.x}, {translateY: pan.y}],
+            transform: [
+              {translateX: pan.x},
+              {translateY: pan.y},
+              {scaleY: scale},
+            ],
           },
           styles.blockContainer,
           isMoving && styles.movingBlock,
