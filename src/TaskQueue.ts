@@ -41,7 +41,7 @@ export class TaskQueue {
   }
 
   static runNext() {
-    setTimeout(() => {
+    setImmediate(() => {
       if (this.tasks.length) {
         const nextTask = this.tasks.shift() as Task;
         nextTask.handler();
@@ -52,7 +52,7 @@ export class TaskQueue {
         this.onDrained?.();
         this.isDrained = true;
       }
-    }, 0);
+    });
   }
 
   static registerOnFilled(callback: () => void) {
