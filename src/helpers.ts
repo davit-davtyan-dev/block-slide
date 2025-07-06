@@ -57,8 +57,8 @@ export function doBlocksOverlap(blockA: Block, blockB: Block) {
   return Math.max(blockAStart, blockBStart) < Math.min(blockAEnd, blockBEnd);
 }
 
-export function getRowsCount(newBlocks: Array<Block>) {
-  const uniqueRowIndices = new Set(newBlocks.map(block => block.rowIndex));
+export function getRowsCount(blocks: Array<Block>) {
+  const uniqueRowIndices = new Set(blocks.map(block => block.rowIndex));
 
   return uniqueRowIndices.size;
 }

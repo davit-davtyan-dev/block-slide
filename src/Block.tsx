@@ -20,7 +20,7 @@ function roundToNearestMultiple(num: number, multiple: number) {
 export default function Block(props: BlockProps) {
   const {blockPixelSize, martixColumns} = useSizes();
   const {theme, themeAnimation} = useTheme();
-  const {setShadowState, moveBlock, hasQueuedTask} = useGameContext();
+  const {setShadowState, moveBlock, hasQueuedTask, gameOver} = useGameContext();
 
   const width = props.block.columns * blockPixelSize;
   const min = (props.leftLimit || 0) * blockPixelSize;
@@ -37,7 +37,7 @@ export default function Block(props: BlockProps) {
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: () => {
-          return !hasQueuedTask;
+          return !hasQueuedTask && !gameOver;
         },
         onPanResponderMove: (_e, gestureState) => {
           function setPanValue(value: number) {
@@ -107,6 +107,7 @@ export default function Block(props: BlockProps) {
       x,
       y,
       hasQueuedTask,
+      gameOver,
     ],
   );
 

@@ -33,11 +33,11 @@ export class TaskQueue {
     this.onEnqueue();
   }
 
-  static hasTaskOfType(type: TaskType) {
-    return (
-      this.tasks.some(task => task.type === type) ||
-      this.lowPriorityTasks.some(lpTask => lpTask.type === type)
+  static countTasksOfType(type: TaskType) {
+    const tasksOfType = [...this.tasks, ...this.lowPriorityTasks].filter(
+      task => task.type === type,
     );
+    return tasksOfType.length;
   }
 
   static runNext() {

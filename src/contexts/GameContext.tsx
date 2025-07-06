@@ -33,6 +33,7 @@ type GameContextState = {
   ) => void;
   moveBlock: (blockId: string, newColumnIndex: BlockColumns) => void;
   hasQueuedTask: boolean;
+  gameOver: boolean;
 };
 
 const GameContext = createContext<GameContextState | undefined>(undefined);
@@ -42,31 +43,44 @@ type GameContextProviderProps = {children: React.ReactNode};
 export const GameContextProvider = (props: GameContextProviderProps) => {
   const {blockPixelSize, martixColumns, martixRows} = useSizes();
   const generateRow = useGenerateRow();
-  const generateInitialRows = useCallback(
-    () =>
-      Array(MIN_VISIBLE_ROW_COUNT + 1)
-        .fill(null)
-        .map((_, index) => generateRow(index))
-        .flat(),
-    [generateRow],
-  );
-  const [blocks, setBlocks] = useState(generateInitialRows);
+  const [blocks, setBlocks] = useState(() => generateRow(0));
   const [hasQueuedTask, setHasQueuedTask] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
 
   const addNewRowRef = useRef<() => void>(() => {});
   const applyGravityRef = useRef<(oldBlocks: Array<Block>) => void>(() => {});
   const removeCompletedRowsRef = useRef<(oldBlocks: Array<Block>) => void>(
     () => {},
   );
+  const checkIfGameIsOverRef = useRef(() => {});
 
   useEffect(() => {
     TaskQueue.registerOnFilled(() => {
       setHasQueuedTask(true);
     });
     TaskQueue.registerOnDrained(() => {
+      checkIfGameIsOverRef.current();
       setHasQueuedTask(false);
     });
   }, []);
+
+  useEffect(() => {
+    // NOTE: start the game gracefully
+    TaskQueue.enqueueLowPriorityTask({
+      type: TaskType.AddNewRow,
+      handler: addNewRowRef.current,
+    });
+    TaskQueue.runNext();
+  }, []);
+
+  const checkIfGameIsOver = useCallback(() => {
+    const rowsCount = getRowsCount(blocks);
+    if (rowsCount > martixRows) {
+      setGameOver(true);
+    }
+  }, [blocks, martixRows]);
+
+  checkIfGameIsOverRef.current = checkIfGameIsOver;
 
   const applyGravity = useCallback(
     (oldBlocks: Array<Block>) => {
@@ -128,6 +142,17 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
     [blockPixelSize, martixRows],
   );
 
+  const queueAddRowIfNeeded = useCallback((newBlocks: Array<Block>) => {
+    const rowsCount = getRowsCount(newBlocks);
+    const queuedRowAdd = TaskQueue.countTasksOfType(TaskType.AddNewRow);
+    if (rowsCount + queuedRowAdd < MIN_VISIBLE_ROW_COUNT + 1) {
+      TaskQueue.enqueueLowPriorityTask({
+        type: TaskType.AddNewRow,
+        handler: addNewRowRef.current,
+      });
+    }
+  }, []);
+
   const addNewRow = useCallback(() => {
     const newRowBlocks = generateRow(0);
 
@@ -135,9 +160,12 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
       const newBlocks: Array<Block> = [];
       const animations: Array<Animated.CompositeAnimation> = [];
 
+      const countByRow: Record<number, number> = {};
       for (const block of oldBlocks) {
         const newBlock = {...block};
         newBlock.rowIndex += 1;
+        countByRow[newBlock.rowIndex] =
+          (countByRow[newBlock.rowIndex] || 0) + 1;
         newBlock.y = blockPixelSize * (martixRows - newBlock.rowIndex);
 
         newBlocks.push(newBlock);
@@ -156,19 +184,15 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
         type: TaskType.ApplyGravity,
         handler: () => applyGravityRef.current(newBlocks),
       });
-      for (let i = getRowsCount(newBlocks); i <= MIN_VISIBLE_ROW_COUNT; i++) {
-        TaskQueue.enqueueLowPriorityTask({
-          type: TaskType.AddNewRow,
-          handler: addNewRowRef.current,
-        });
-      }
+
+      queueAddRowIfNeeded(newBlocks);
       Animated.parallel(animations).start(() => {
         TaskQueue.runNext();
       });
 
       return newBlocks;
     });
-  }, [blockPixelSize, generateRow, martixRows]);
+  }, [blockPixelSize, generateRow, martixRows, queueAddRowIfNeeded]);
 
   const removeCompletedRows = useCallback(
     (oldBlocks: Array<Block>) => {
@@ -208,19 +232,12 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
           TaskQueue.runNext();
         });
       }
-      if (!TaskQueue.hasTaskOfType(TaskType.AddNewRow)) {
-        for (let i = getRowsCount(newBlocks); i <= MIN_VISIBLE_ROW_COUNT; i++) {
-          TaskQueue.enqueueLowPriorityTask({
-            type: TaskType.AddNewRow,
-            handler: addNewRowRef.current,
-          });
-        }
-      }
+      queueAddRowIfNeeded(newBlocks);
       if (!animations.length) {
         TaskQueue.runNext();
       }
     },
-    [martixColumns],
+    [martixColumns, queueAddRowIfNeeded],
   );
 
   addNewRowRef.current = addNewRow;
@@ -237,10 +254,14 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
   });
 
   const restart = useCallback(() => {
-    const newBlocks = generateInitialRows();
-
-    setBlocks(newBlocks);
-  }, [generateInitialRows]);
+    setBlocks([]);
+    setGameOver(false);
+    TaskQueue.enqueueLowPriorityTask({
+      type: TaskType.AddNewRow,
+      handler: addNewRowRef.current,
+    });
+    TaskQueue.runNext();
+  }, []);
 
   const setShadowState = useCallback<GameContextState['setShadowState']>(
     callback => {
@@ -308,6 +329,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
       setShadowState,
       moveBlock,
       hasQueuedTask,
+      gameOver,
     }),
     [
       blocks,
@@ -318,6 +340,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
       setShadowState,
       moveBlock,
       hasQueuedTask,
+      gameOver,
     ],
   );
 
