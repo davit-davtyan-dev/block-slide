@@ -4,6 +4,7 @@ import {Row, Text, TouchableOpacity, View} from './components';
 import Matrix from './Matrix';
 import BlockComponent from './Block';
 import SideMenu from './components/SideMenu';
+import GameOverView from './GameOverView';
 import {useGameContext} from './contexts/GameContext';
 import {useTheme} from './contexts/ThemeContext';
 import {useSizes} from './contexts/SizesContext';
@@ -85,6 +86,7 @@ export default function GameScreen() {
             </React.Fragment>
           );
         })}
+        <GameOverView />
       </Matrix>
 
       <Row position="relative" marginTop={6} width={matrixWidth}>

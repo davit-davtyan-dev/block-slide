@@ -65,6 +65,7 @@ export function formatCommonStyleProps<
     bottom,
     left,
     right,
+    zIndex,
 
     m,
     margin = formatSize(m),
@@ -149,6 +150,7 @@ export function formatCommonStyleProps<
     bottom,
     left,
     right,
+    zIndex,
 
     margin,
     marginBottom,

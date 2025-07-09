@@ -46,6 +46,7 @@ export type CommonStyleProps = {
   bottom?: ViewStyle['bottom'];
   left?: ViewStyle['left'];
   right?: ViewStyle['right'];
+  zIndex?: ViewStyle['zIndex'];
 
   m?: DimensionValueWithPixel;
   margin?: DimensionValueWithPixel;
