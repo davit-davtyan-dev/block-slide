@@ -286,13 +286,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
         shadowSizeRef.current.setValue(newState.shadowColumns * blockPixelSize);
       }
     },
-    [
-      blockPixelSize,
-      shadowPositionRef,
-      shadowOpacityRef,
-      shadowSizeRef,
-      shadowStateRef,
-    ],
+    [blockPixelSize],
   );
 
   const moveBlock = useCallback<GameContextState['moveBlock']>(
@@ -305,6 +299,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
               const newBlock = {...block};
               if (block.id === blockId) {
                 newBlock.columnIndex = newColumnIndex;
+                newBlock.x = newColumnIndex * blockPixelSize;
               }
               return newBlock;
             }),
@@ -316,7 +311,7 @@ export const GameContextProvider = (props: GameContextProviderProps) => {
       });
       TaskQueue.runNext();
     },
-    [blocks],
+    [blocks, blockPixelSize],
   );
 
   const value = useMemo<GameContextState>(

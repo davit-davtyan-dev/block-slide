@@ -1,5 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import {Animated, PanResponder, StyleSheet} from 'react-native';
+import {View} from './components';
 import {useGameContext} from './contexts/GameContext';
 import {useSizes} from './contexts/SizesContext';
 import {useTheme} from './contexts/ThemeContext';
@@ -112,6 +113,7 @@ export default function Block(props: BlockProps) {
   );
 
   const color = theme.blockColorOptions[props.block.colorIndex];
+  const borderColor = darkenColor(color, 0.2);
   const animatedColor = themeAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [color, color], // Since we don't have prev color, we'll use the same color
@@ -119,7 +121,7 @@ export default function Block(props: BlockProps) {
 
   const animatedBorderColor = themeAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [darkenColor(color, 0.2), darkenColor(color, 0.2)], // Since we don't have prev color, we'll use the same color
+    outputRange: [borderColor, borderColor], // Since we don't have prev color, we'll use the same color
   });
 
   return (
@@ -134,7 +136,6 @@ export default function Block(props: BlockProps) {
             ],
           },
           styles.blockContainer,
-          isMoving && styles.movingBlock,
         ]}
         {...panResponder.panHandlers}>
         <Animated.View
@@ -149,6 +150,20 @@ export default function Block(props: BlockProps) {
           ]}
         />
       </Animated.View>
+      <View
+        style={[
+          styles.block,
+          styles.blockShadow,
+          isMoving && styles.movingBlockShadow,
+          {
+            width,
+            height: blockPixelSize,
+            borderColor: borderColor,
+            backgroundColor: color,
+            transform: [{translateX: x}, {translateY: y}],
+          },
+        ]}
+      />
     </>
   );
 }
@@ -156,11 +171,16 @@ export default function Block(props: BlockProps) {
 const styles = StyleSheet.create({
   blockContainer: {
     position: 'absolute',
-  },
-  movingBlock: {
     zIndex: 1,
   },
   block: {
     borderWidth: 6,
+  },
+  blockShadow: {
+    position: 'absolute',
+    opacity: 0,
+  },
+  movingBlockShadow: {
+    opacity: 0.5,
   },
 });
