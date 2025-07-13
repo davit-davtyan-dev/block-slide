@@ -69,11 +69,7 @@ export default function GameOverView() {
 
 const styles = StyleSheet.create({
   absolute: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
+    ...StyleSheet.absoluteFillObject,
     zIndex: 20,
     alignItems: 'center',
     justifyContent: 'center',

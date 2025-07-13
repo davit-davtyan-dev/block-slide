@@ -6,18 +6,19 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import useColorScheme, {
-  ColorScheme,
-  EffectiveColorScheme,
-} from '../hooks/useColorScheme';
 import {
   StatusBar,
   useColorScheme as useDeviceColorScheme,
   Animated,
+  StyleSheet,
 } from 'react-native';
+import {BlurView} from '@react-native-community/blur';
 import {View} from '../components';
-import {HexColor} from '../types';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import useColorScheme from '../hooks/useColorScheme';
+
+import {ColorScheme, EffectiveColorScheme} from '../hooks/useColorScheme';
+import type {HexColor} from '../types';
 
 /** Ensure this constant matches the length of blockColorOptions type definition */
 export const BLOCK_COLOR_COUNT = 5;
@@ -206,6 +207,7 @@ interface ThemeContextType {
   animatedMatrixCellBackground: Animated.AnimatedInterpolation<string>;
   animatedMatrixCellBorder: Animated.AnimatedInterpolation<string>;
   animateThemeChange: () => void;
+  statusBarBluryViewOpacity: Animated.Value;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -219,6 +221,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
   const themeAnimation = useRef(new Animated.Value(1)).current;
   const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
   const safeAreaInsets = useSafeAreaInsets();
+  const statusBarBluryViewOpacity = useRef(new Animated.Value(0)).current;
 
   const effectiveColorScheme =
     colorScheme === ColorScheme.System
@@ -292,6 +295,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
       animatedMatrixCellBackground: createAnimatedColor('matrixCellBackground'),
       animatedMatrixCellBorder: createAnimatedColor('matrixCellBorder'),
       animateThemeChange,
+      statusBarBluryViewOpacity,
     }),
     [
       themeName,
@@ -303,6 +307,7 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
       handleThemeChange,
       handleColorSchemeChange,
       animateThemeChange,
+      statusBarBluryViewOpacity,
     ],
   );
 
@@ -315,7 +320,20 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({
             : 'dark-content'
         }
       />
-      <View height={safeAreaInsets.top} bgColor={theme.backgroundColor} />
+      <View height={safeAreaInsets.top} bgColor={theme.backgroundColor}>
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {opacity: statusBarBluryViewOpacity},
+          ]}>
+          <BlurView
+            style={StyleSheet.absoluteFillObject}
+            blurType={effectiveColorScheme}
+            blurAmount={10}
+            reducedTransparencyFallbackColor="white"
+          />
+        </Animated.View>
+      </View>
       {children}
     </ThemeContext.Provider>
   );
