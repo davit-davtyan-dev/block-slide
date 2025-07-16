@@ -24,12 +24,14 @@ const sideMenuMargin = (screenWidth - sideMenuWidth) / 2;
 
 export default function SideMenu() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isBlurViewHidden, setIsBlurViewHidden] = useState(false);
   const {effectiveColorScheme, theme, statusBarBluryViewOpacity} = useTheme();
 
   const translateX = useRef(new Animated.Value(screenWidth)).current;
 
   useEffect(() => {
     if (isVisible) {
+      setIsBlurViewHidden(false);
       Animated.parallel([
         Animated.timing(translateX, {
           toValue: 0,
@@ -58,7 +60,12 @@ export default function SideMenu() {
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start(({finished}) => {
+        if (!finished) {
+          return;
+        }
+        setIsBlurViewHidden(true);
+      });
     }
   }, [isVisible, translateX, statusBarBluryViewOpacity]);
 
@@ -105,7 +112,11 @@ export default function SideMenu() {
         }}
       />
       <Animated.View
-        style={[styles.absolute, {opacity: statusBarBluryViewOpacity}]}>
+        style={[
+          styles.absolute,
+          isBlurViewHidden && styles.displayNone,
+          {opacity: statusBarBluryViewOpacity},
+        ]}>
         <BlurView
           style={styles.absolute}
           blurType={effectiveColorScheme}
@@ -123,6 +134,9 @@ const styles = StyleSheet.create({
     zIndex: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  displayNone: {
+    display: 'none',
   },
   modalContainer: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Animated, StyleSheet} from 'react-native';
 import {BlurView} from '@react-native-community/blur';
 import {Text, TouchableOpacity} from './components';
@@ -9,9 +9,11 @@ export default function GameOverView() {
   const {theme, effectiveColorScheme} = useTheme();
   const {gameOver, restart} = useGameContext();
   const bluryViewOpacity = useRef(new Animated.Value(0)).current;
+  const [isBlurViewHidden, setIsBlurViewHidden] = useState(false);
 
   useEffect(() => {
     if (gameOver) {
+      setIsBlurViewHidden(false);
       Animated.timing(bluryViewOpacity, {
         toValue: 1,
         duration: 1000,
@@ -22,12 +24,22 @@ export default function GameOverView() {
         toValue: 0,
         duration: 100,
         useNativeDriver: true,
-      }).start();
+      }).start(({finished}) => {
+        if (!finished) {
+          return;
+        }
+        setIsBlurViewHidden(true);
+      });
     }
   }, [gameOver, bluryViewOpacity]);
 
   return (
-    <Animated.View style={[styles.absolute, {opacity: bluryViewOpacity}]}>
+    <Animated.View
+      style={[
+        styles.absolute,
+        isBlurViewHidden && styles.displayNone,
+        {opacity: bluryViewOpacity},
+      ]}>
       <BlurView
         style={styles.absolute}
         blurType={effectiveColorScheme}
@@ -73,5 +85,8 @@ const styles = StyleSheet.create({
     zIndex: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  displayNone: {
+    display: 'none',
   },
 });
