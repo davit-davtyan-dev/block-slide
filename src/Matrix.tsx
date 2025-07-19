@@ -16,7 +16,7 @@ export default function Matrix(props: MatrixProps) {
   const {animatedBackgroundColor} = useTheme();
 
   return (
-    <View center>
+    <View center overflow="hidden">
       <Animated.View
         style={[
           {
