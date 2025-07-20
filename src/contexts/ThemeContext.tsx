@@ -20,9 +20,6 @@ import useColorScheme from '../hooks/useColorScheme';
 import {ColorScheme, EffectiveColorScheme} from '../hooks/useColorScheme';
 import type {HexColor} from '../types';
 
-/** Ensure this constant matches the length of blockColorOptions type definition */
-export const BLOCK_COLOR_COUNT = 5;
-
 interface Theme {
   mainColor: HexColor;
   backgroundColor: HexColor;

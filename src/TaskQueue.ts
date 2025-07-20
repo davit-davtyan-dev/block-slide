@@ -12,8 +12,8 @@ type Task = {
 export class TaskQueue {
   static tasks: Array<Task> = [];
   static lowPriorityTasks: Array<Task> = [];
-  static onFilled: () => void;
-  static onDrained: () => void;
+  static onFilled: (() => void) | undefined;
+  static onDrained: (() => void) | undefined;
   private static isDrained = true;
 
   private static onEnqueue() {
@@ -60,5 +60,15 @@ export class TaskQueue {
   }
   static registerOnDrained(callback: () => void) {
     this.onDrained = callback;
+  }
+  static unregisterOnFilled(callback: () => void) {
+    if (this.onFilled === callback) {
+      this.onFilled = undefined;
+    }
+  }
+  static unregisterOnDrained(callback: () => void) {
+    if (this.onDrained === callback) {
+      this.onDrained = undefined;
+    }
   }
 }

@@ -4,7 +4,7 @@ import Matrix from './Matrix';
 import BlockComponent from './Block';
 import Menu from './components/Menu/Menu';
 import GameOverView from './GameOverView';
-import {useGameContext} from './contexts/GameContext';
+import {useGameStore} from './store/gameStore';
 import {useTheme} from './contexts/ThemeContext';
 import {useSizes} from './contexts/SizesContext';
 
@@ -12,7 +12,8 @@ import type {Block} from './types';
 
 export default function GameScreen() {
   const {blockPixelSize, matrixWidth} = useSizes();
-  const {blocks, restart} = useGameContext();
+  const blocks = useGameStore(state => state.blocks);
+  const restart = useGameStore(state => state.restart);
   const {theme} = useTheme();
 
   const [upcomingBlocks, blocksToRender] = [...blocks]

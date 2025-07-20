@@ -1,7 +1,7 @@
 import React, {useMemo, useState} from 'react';
 import {Animated, PanResponder, StyleSheet} from 'react-native';
 import {View} from './components';
-import {useGameContext} from './contexts/GameContext';
+import {useGameStore} from './store/gameStore';
 import {useSizes} from './contexts/SizesContext';
 import {useTheme} from './contexts/ThemeContext';
 import {darkenColor} from './helpers';
@@ -21,7 +21,10 @@ function roundToNearestMultiple(num: number, multiple: number) {
 export default function Block(props: BlockProps) {
   const {blockPixelSize, martixColumns} = useSizes();
   const {theme, themeAnimation} = useTheme();
-  const {setShadowState, moveBlock, hasQueuedTask, gameOver} = useGameContext();
+  const setShadowState = useGameStore(state => state.setShadowState);
+  const moveBlock = useGameStore(state => state.moveBlock);
+  const hasQueuedTask = useGameStore(state => state.hasQueuedTask);
+  const gameOver = useGameStore(state => state.gameOver);
 
   const width = props.block.columns * blockPixelSize;
   const min = (props.leftLimit || 0) * blockPixelSize;

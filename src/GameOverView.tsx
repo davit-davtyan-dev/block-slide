@@ -2,12 +2,13 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Animated, StyleSheet} from 'react-native';
 import {BlurView} from '@react-native-community/blur';
 import {Text, TouchableOpacity} from './components';
-import {useGameContext} from './contexts/GameContext';
+import {useGameStore} from './store/gameStore';
 import {useTheme} from './contexts/ThemeContext';
 
 export default function GameOverView() {
   const {theme, effectiveColorScheme} = useTheme();
-  const {gameOver, restart} = useGameContext();
+  const gameOver = useGameStore(state => state.gameOver);
+  const restart = useGameStore(state => state.restart);
   const bluryViewOpacity = useRef(new Animated.Value(0)).current;
   const [isBlurViewHidden, setIsBlurViewHidden] = useState(false);
 
