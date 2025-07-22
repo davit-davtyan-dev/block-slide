@@ -1,66 +1,16 @@
-import {create} from 'zustand';
-import {Animated, Dimensions} from 'react-native';
+import {Animated} from 'react-native';
+import {StateCreator} from 'zustand';
 import {TaskQueue, TaskType} from '../TaskQueue';
 import {doBlocksOverlap, generateRow, getRowsCount} from '../helpers';
 import {ANIMATION_DEFAULT_DURATION, MIN_VISIBLE_ROW_COUNT} from '../constants';
-import type {Block, BlockColumns} from '../types';
 
-const dimensions = Dimensions.get('window');
-const matrixMargin = 32;
-const martixRows = 10;
-const martixColumns = 8;
+import type {Block} from '../types';
+import type {GameSlice, GameState, SizesSlice} from './types';
 
-const blockPixelSize = Math.round(
-  (dimensions.width - matrixMargin * 2) / martixColumns,
-);
-const matrixWidth = blockPixelSize * martixColumns;
-const matrixHeight = blockPixelSize * martixRows;
-
-// Shadow state type
-type ShadowState = {
-  shadowPosition?: number;
-  shadowColumns?: BlockColumns;
-  showShadow?: boolean;
-};
-
-interface GameState {
-  // State
-  blocks: Block[];
-  hasQueuedTask: boolean;
-  gameOver: boolean;
-
-  // Shadow state
-  shadowState: ShadowState;
-  shadowPosition: Animated.Value;
-  shadowOpacity: Animated.Value;
-  shadowSize: Animated.Value;
-
-  // Actions
-  setBlocks: (blocks: Block[]) => void;
-  setHasQueuedTask: (hasQueuedTask: boolean) => void;
-  setGameOver: (gameOver: boolean) => void;
-  setShadowState: (
-    callback: (oldShadowState: ShadowState) => ShadowState | undefined,
-  ) => void;
-
-  // Game logic actions
-  addNewRow: () => void;
-  applyGravity: (oldBlocks: Block[]) => void;
-  removeCompletedRows: (oldBlocks: Block[]) => void;
-  moveBlock: (blockId: string, newColumnIndex: BlockColumns) => void;
-  restart: () => void;
-  checkIfGameIsOver: () => void;
-  queueAddRowIfNeeded: (newBlocks: Block[]) => void;
-}
-
-export const useGameStore = create<GameState>((set, get) => ({
-  // Initial state
+const initialState: GameState = {
   blocks: [],
   hasQueuedTask: false,
   gameOver: false,
-  martixColumns,
-  matrixWidth,
-  matrixHeight,
   shadowState: {
     shadowColumns: 1,
     shadowPosition: 0,
@@ -69,11 +19,16 @@ export const useGameStore = create<GameState>((set, get) => ({
   shadowPosition: new Animated.Value(0),
   shadowOpacity: new Animated.Value(0),
   shadowSize: new Animated.Value(0),
+};
 
-  // Basic setters
-  setBlocks: blocks => set({blocks}),
+export const createGameSlice: StateCreator<
+  GameSlice & SizesSlice,
+  [],
+  [],
+  GameSlice
+> = (set, get) => ({
+  ...initialState,
   setHasQueuedTask: hasQueuedTask => set({hasQueuedTask}),
-  setGameOver: gameOver => set({gameOver}),
 
   setShadowState: callback => {
     const currentState = get();
@@ -93,14 +48,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
       if (newState.shadowColumns !== undefined) {
         currentState.shadowSize.setValue(
-          newState.shadowColumns * blockPixelSize,
+          newState.shadowColumns * currentState.blockPixelSize,
         );
       }
     }
   },
 
   addNewRow: () => {
-    const {blocks, applyGravity} = get();
+    const {blocks, blockPixelSize, martixRows, applyGravity} = get();
     const newRowBlocks = generateRow(0, blockPixelSize, martixRows);
 
     // Animate and update existing blocks
@@ -135,7 +90,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   applyGravity: oldBlocks => {
-    const {removeCompletedRows} = get();
+    const {blockPixelSize, martixRows, removeCompletedRows} = get();
     const orderedBlocks = oldBlocks
       .map(block => ({...block}))
       .sort((a, b) => (a.rowIndex < b.rowIndex ? -1 : 1));
@@ -195,7 +150,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   removeCompletedRows: oldBlocks => {
-    const {applyGravity, queueAddRowIfNeeded} = get();
+    const {martixColumns, applyGravity, queueAddRowIfNeeded} = get();
     const rowColumnsByRowIndex = oldBlocks.reduce((acc, block) => {
       acc[block.rowIndex] = (acc[block.rowIndex] ?? 0) + block.columns;
       return acc;
@@ -241,7 +196,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   moveBlock: (blockId, newColumnIndex) => {
-    const {blocks, applyGravity, addNewRow} = get();
+    const {blocks, blockPixelSize, applyGravity, addNewRow} = get();
     const updatedBlocks = blocks.map(block => {
       const newBlock = {...block};
       if (block.id === blockId) {
@@ -273,7 +228,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   checkIfGameIsOver: () => {
-    const {blocks} = get();
+    const {blocks, martixRows} = get();
     const rowsCount = getRowsCount(blocks);
     if (rowsCount > martixRows) {
       set({gameOver: true});
@@ -290,4 +245,4 @@ export const useGameStore = create<GameState>((set, get) => ({
       });
     }
   },
-}));
+});

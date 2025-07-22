@@ -1,11 +1,13 @@
 import React from 'react';
 import {Animated, StyleSheet} from 'react-native';
 import {Row, View} from './components';
-import {useSizes} from './contexts/SizesContext';
+import {useGameStore} from './store/store';
 import {useTheme} from './contexts/ThemeContext';
 
 export default function MatrixBackground() {
-  const {martixColumns, martixRows, blockPixelSize} = useSizes();
+  const martixColumns = useGameStore(state => state.martixColumns);
+  const martixRows = useGameStore(state => state.martixRows);
+  const blockPixelSize = useGameStore(state => state.blockPixelSize);
   const {animatedMatrixCellBackground, animatedMatrixCellBorder} = useTheme();
 
   return (

@@ -1,9 +1,8 @@
 import React from 'react';
 import {Animated, StyleSheet} from 'react-native';
 import {View} from './components';
-import {useGameStore} from './store/gameStore';
 import MatrixBackground from './MatrixBackground';
-import {useSizes} from './contexts/SizesContext';
+import {useGameStore} from './store/store';
 import {useTheme} from './contexts/ThemeContext';
 
 interface MatrixProps {
@@ -11,7 +10,8 @@ interface MatrixProps {
 }
 
 export default function Matrix(props: MatrixProps) {
-  const {matrixWidth, matrixHeight} = useSizes();
+  const matrixWidth = useGameStore(state => state.matrixWidth);
+  const matrixHeight = useGameStore(state => state.matrixHeight);
   const shadowPosition = useGameStore(state => state.shadowPosition);
   const shadowOpacity = useGameStore(state => state.shadowOpacity);
   const shadowSize = useGameStore(state => state.shadowSize);

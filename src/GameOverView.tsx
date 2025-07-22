@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Animated, StyleSheet} from 'react-native';
 import {BlurView} from '@react-native-community/blur';
 import {Text, TouchableOpacity} from './components';
-import {useGameStore} from './store/gameStore';
+import {useGameStore} from './store/store';
 import {useTheme} from './contexts/ThemeContext';
 
 export default function GameOverView() {

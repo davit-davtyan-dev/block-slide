@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 import {TaskQueue} from '../TaskQueue';
-import {useGameStore} from '../store/gameStore';
+import {useGameStore} from '../store/store';
 
 export function useGameTaskQueue() {
   const setHasQueuedTask = useGameStore(state => state.setHasQueuedTask);

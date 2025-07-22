@@ -8,10 +8,9 @@
 import React, {useEffect} from 'react';
 
 import {ThemeProvider} from './src/contexts/ThemeContext';
-import {SizesProvider} from './src/contexts/SizesContext';
 import GameScreen from './src/GameScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {useGameStore} from './src/store/gameStore';
+import {useGameStore} from './src/store/store';
 import {useGameTaskQueue} from './src/hooks/useGameTaskQueue';
 import {TaskQueue, TaskType} from './src/TaskQueue';
 
@@ -29,9 +28,7 @@ function App(): React.JSX.Element {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <SizesProvider>
-          <GameScreen />
-        </SizesProvider>
+        <GameScreen />
       </ThemeProvider>
     </SafeAreaProvider>
   );
